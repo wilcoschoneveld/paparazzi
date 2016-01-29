@@ -859,7 +859,11 @@
     <field name="last_msg" type="uint8[]"/>
   </message>
 
-  <!--107 is free -->
+  <message name="COLORFILTER" id="107">
+    <field name="color_count" type="int32"/>
+  </message>
+
+
   <!--108 is free -->
 
   <message name="MULTIGAZE_METERS" id="109">
