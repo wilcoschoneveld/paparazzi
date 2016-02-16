@@ -213,8 +213,10 @@ static void attitude_run_indi(int32_t indi_commands[], struct Int32Quat *att_err
   indi.angular_accel_ref.r = reference_acceleration.err_r * QUAT1_FLOAT_OF_BFP(att_err->qz)
                              - reference_acceleration.rate_r * indi.filtered_rate.r;
 #else
-  indi.angular_accel_ref.r = reference_acceleration.err_r * QUAT1_FLOAT_OF_BFP(att_err->qz)
-                             - reference_acceleration.rate_r * body_rate->r;
+  float rate_ref_r = reference_acceleration.err_r * QUAT1_FLOAT_OF_BFP(att_err->qz)/reference_acceleration.rate_r;
+  Bound(rate_ref_r, -RadOfDeg(STABILIZATION_INDI_MAX_R), RadOfDeg(STABILIZATION_INDI_MAX_R));
+
+  indi.angular_accel_ref.r = reference_acceleration.rate_r * (rate_ref_r - body_rate->r);
 #endif
 
   //Incremented in angular acceleration requires increment in control input
