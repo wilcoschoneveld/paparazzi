@@ -4,7 +4,7 @@
      * Autopilot:   Lisa/MX 2.1 with STM32F4  http://wiki.paparazziuav.org/wiki/Lisa/M_v21
      * IMU:         Integrated Aspirin 2.2    http://wiki.paparazziuav.org/wiki/AspirinIMU
      * Actuators:   Asctec motor controllers  http://wiki.paparazziuav.org/wiki/Subsystem/actuators#Asctec_v2
-     * RC:          one Spektrum sats         http://wiki.paparazziuav.org/wiki/Subsystem/radio_control#Spektrum
+     * RC:          One Spektrum sats         http://wiki.paparazziuav.org/wiki/Subsystem/radio_control#Spektrum
 -->
 
 <airframe name="MAVTec5">
