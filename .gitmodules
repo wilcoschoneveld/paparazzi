@@ -21,4 +21,4 @@
 	url = https://github.com/paparazzi/mavlink.git
 [submodule "sw/ext/opencv_bebop"]
 	path = sw/ext/opencv_bebop
-	url = git@github.com:tudelft/opencv_bebop.git
+	url = https://github.com/tudelft/opencv_bebop.git
