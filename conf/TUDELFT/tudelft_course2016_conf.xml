@@ -13,7 +13,7 @@
   <aircraft
    name="bebop_opencv"
    ac_id="3"
-   airframe="airframes/examples/course_bebop_opencv.xml"
+   airframe="airframes/TUDELFT/tudelft_course2016_bebop_FAST.xml"
    radio="radios/dummy.xml"
    telemetry="telemetry/default_rotorcraft.xml"
    flight_plan="flight_plans/dummy.xml"
