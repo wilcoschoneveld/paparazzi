@@ -863,8 +863,9 @@
     <field name="color_count" type="int32"/>
   </message>
 
-
-  <!--108 is free -->
+  <message name="OPTICAL_FLOW" id="108">
+    <field name="divergence" type="float" />
+  </message>
 
   <message name="MULTIGAZE_METERS" id="109">
     <field name="multigaze_meters" type="float[]"/>

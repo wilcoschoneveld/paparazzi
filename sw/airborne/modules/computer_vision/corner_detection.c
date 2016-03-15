@@ -28,11 +28,12 @@
 #include "lib/vision/fast_rosten.h"
 #include "lib/vision/lucas_kanade.h"
 
+#include "opticflow/size_divergence.h"
+
 #include "subsystems/datalink/telemetry.h"
 
 #define IMG_WIDTH 272
 #define IMG_HEIGHT 272
-
 
 // Thresholds FAST
 uint8_t threshold  = 20;
@@ -98,6 +99,10 @@ bool_t corner_detection_func(struct image_t* img)
 
   // Copy new image to old image
   image_copy(&img_gray, &img_old);
+
+  float divergence = get_size_divergence(vectors, feature_cnt, 0);
+
+  DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &divergence);
 
   // TODO: why false?
   return TRUE;
