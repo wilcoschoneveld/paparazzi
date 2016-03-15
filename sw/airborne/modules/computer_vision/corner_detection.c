@@ -30,6 +30,10 @@
 
 #include "subsystems/datalink/telemetry.h"
 
+#define IMG_WIDTH 272
+#define IMG_HEIGHT 272
+
+
 // Thresholds FAST
 uint8_t threshold  = 20;
 uint16_t min_dist  = 10;
@@ -50,8 +54,8 @@ struct point_t grid[POINTS_X * POINTS_Y];
 void corner_detection_init(void)
 {
   // Initialize grid
-  int x_spacing = (272 - 2 * x_padding) / (POINTS_X - 1);
-  int y_spacing = (272 - 2 * y_padding) / (POINTS_Y - 1);
+  int x_spacing = (IMG_WIDTH - 2 * x_padding) / (POINTS_X - 1);
+  int y_spacing = (IMG_HEIGHT - 2 * y_padding) / (POINTS_Y - 1);
 
   for (int i = 0; i < POINTS_X; ++i) {
     for (int j = 0; j < POINTS_Y; ++j) {
@@ -62,18 +66,17 @@ void corner_detection_init(void)
   }
 
   // Initialize images
-  image_create(&img_gray, 272, 272, IMAGE_GRAYSCALE);
-  image_create(&img_old, 272, 272, IMAGE_GRAYSCALE);
+  image_create(&img_gray, IMG_WIDTH, IMG_HEIGHT, IMAGE_GRAYSCALE);
+  image_create(&img_old, IMG_WIDTH, IMG_HEIGHT, IMAGE_GRAYSCALE);
 
   // Add detection function to CV
   cv_add(corner_detection_func);
 }
 
-
 bool_t corner_detection_func(struct image_t* img)
 {
   // Storage for feature & vector count
-  uint16_t feature_cnt;
+  uint16_t feature_cnt = POINTS_X * POINTS_Y;
 
   // Convert image to grayscale
   image_to_grayscale(img, &img_gray);
@@ -85,8 +88,6 @@ bool_t corner_detection_func(struct image_t* img)
 //  image_show_points(img, features, feature_cnt);
 
   // Calculate optical flow from features found
-  feature_cnt = POINTS_X * POINTS_Y;
-
   struct flow_t *vectors = opticFlowLK(&img_gray, &img_old, grid, &feature_cnt, 10, 10, 10, 2, POINTS_X * POINTS_Y);
 
   // Show optical flow on original image
