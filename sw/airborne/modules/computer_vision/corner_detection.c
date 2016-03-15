@@ -32,78 +32,25 @@
 #include <stdio.h>
 #include <std.h>
 
-// Result
-uint16_t corner_cnt     = 0;
-int      corner_cnt_int = 0; // Counter sent to Messages in Paparazzi
-
 // Thresholds FAST
 uint8_t threshold  = 20;
 uint16_t min_dist  = 10;
-uint16_t x_padding = 0; // The padding in the x direction to not scan for corners
-uint16_t y_padding = 0; // The padding in the x direction to not scan for corners
+uint16_t x_padding = 30; // The padding in the x direction to not scan for corners
+uint16_t y_padding = 60; // The padding in the y direction to not scan for corners
 
 // Function
 bool_t corner_detection_func(struct image_t* img);
 bool_t corner_detection_func(struct image_t* img)
 {
+  uint16_t feature_cnt;
 
-  // Corner detection
-  struct point_t *corners = fast9_detect(img, threshold, min_dist, x_padding, y_padding, &corner_cnt);
+  // IMG = 272 x 272
+  image_to_grayscale(img, img);
 
-  corner_cnt_int = corner_cnt;
+  struct point_t *features = fast9_detect(img, threshold, min_dist, x_padding, y_padding, &feature_cnt);
 
+  image_show_points(img, features, feature_cnt);
 
-//////////////////////////////////////////////////////////////////////////////////
-
-//  uint8_t *source = img->buf;
-//  uint8_t *dest   = img->buf;
-//  int flag        = 0;
-//  int height      = img->h;
-//  int width       = img->w;
-//
-//  // Display the corners in the image
-//  for (int row=0; row <height; row++){
-//	  for (int col=0; col <width; col++){
-//
-//		  // Check if the pixel is defined as a corner
-//		  int position=0;
-//		  while (position <corner_cnt && flag == 0){
-//
-//			  // If a corner is detected, then color red.
-//			  if (corners[position].x == col && corners[position].y == row){
-//				  flag = 1;
-//				  // UYVY
-//				  dest[0] = 64;         // U
-//				  dest[1] = source[1];  // Y
-//				  dest[2] = 255;        // V
-//				  dest[3] = source[3];  // Y
-//			  }
-//			  position++;
-//		}
-//
-//		// If the pixel does not contain a corner, then greyscale
-//		if (flag == 0){
-//			// UYVY
-//			char u = source[0] - 127;
-//			u /= 4;
-//			dest[0] = 127;        // U
-//			dest[1] = source[1];  // Y
-//			u = source[2] - 127;
-//			u /= 4;
-//			dest[2] = 127;        // V
-//			dest[3] = source[3];  // Y
-//		}
-//
-//		// Go to the next 2 pixels
-//		dest   += 4;
-//		source += 4;
-//		flag = 0;
-//	  }
-//  }
-
-////////////////////////////////////////////////////////////////////////////////
-  
-  DOWNLINK_SEND_COLORFILTER(DefaultChannel, DefaultDevice, &corner_cnt_int);
   return FALSE;
 }
 
