@@ -24,27 +24,52 @@
  */
 
 // Own header
-#include "modules/computer_vision/cv.h"
 #include "modules/computer_vision/corner_detection.h"
 #include "lib/vision/fast_rosten.h"
 #include "lib/vision/lucas_kanade.h"
 
 #include "subsystems/datalink/telemetry.h"
-#include <stdio.h>
-#include <std.h>
 
 // Thresholds FAST
 uint8_t threshold  = 20;
 uint16_t min_dist  = 10;
 uint16_t x_padding = 30; // The padding in the x direction to not scan for corners
-uint16_t y_padding = 60; // The padding in the y direction to not scan for corners
+uint16_t y_padding = 100; // The padding in the y direction to not scan for corners
 
 // IMG = 272 x 272
 struct image_t img_gray;
 struct image_t img_old;
 
-// Function
-bool_t corner_detection_func(struct image_t* img);
+// Bad way to define but who cares
+#define POINTS_X 10
+#define POINTS_Y 10
+
+struct point_t grid[POINTS_X * POINTS_Y];
+
+
+void corner_detection_init(void)
+{
+  // Initialize grid
+  int x_spacing = (272 - 2 * x_padding) / (POINTS_X - 1);
+  int y_spacing = (272 - 2 * y_padding) / (POINTS_Y - 1);
+
+  for (int i = 0; i < POINTS_X; ++i) {
+    for (int j = 0; j < POINTS_Y; ++j) {
+      int idx = j * POINTS_X + i;
+      grid[idx].x = x_padding + x_spacing * i;
+      grid[idx].y = y_padding + y_spacing * j;
+    }
+  }
+
+  // Initialize images
+  image_create(&img_gray, 272, 272, IMAGE_GRAYSCALE);
+  image_create(&img_old, 272, 272, IMAGE_GRAYSCALE);
+
+  // Add detection function to CV
+  cv_add(corner_detection_func);
+}
+
+
 bool_t corner_detection_func(struct image_t* img)
 {
   // Storage for feature & vector count
@@ -54,13 +79,15 @@ bool_t corner_detection_func(struct image_t* img)
   image_to_grayscale(img, &img_gray);
 
   // Find features to track
-  struct point_t *features = fast9_detect(&img_gray, threshold, min_dist, x_padding, y_padding, &feature_cnt);
+//  struct point_t *features = fast9_detect(&img_gray, threshold, min_dist, x_padding, y_padding, &feature_cnt);
 
   // Show fast features found
 //  image_show_points(img, features, feature_cnt);
 
   // Calculate optical flow from features found
-  struct flow_t *vectors = opticFlowLK(&img_gray, &img_old, features, &feature_cnt, 10, 10, 10, 2, 25);
+  feature_cnt = POINTS_X * POINTS_Y;
+
+  struct flow_t *vectors = opticFlowLK(&img_gray, &img_old, grid, &feature_cnt, 10, 10, 10, 2, POINTS_X * POINTS_Y);
 
   // Show optical flow on original image
   image_show_flow(img, vectors, feature_cnt, 10);
@@ -72,14 +99,6 @@ bool_t corner_detection_func(struct image_t* img)
   image_copy(&img_gray, &img_old);
 
   // TODO: why false?
-  return FALSE;
-}
-
-void corner_detection_init(void)
-{
-  image_create(&img_gray, 272, 272, IMAGE_GRAYSCALE);
-  image_create(&img_old, 272, 272, IMAGE_GRAYSCALE);
-
-  cv_add(corner_detection_func);
+  return TRUE;
 }
 

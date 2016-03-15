@@ -28,10 +28,10 @@
 
 #include <stdint.h>
 
-// Module functions
-extern void corner_detection_init(void);
+#include "modules/computer_vision/cv.h"
 
-extern int corner_count;
-extern int corner_count_int;
+// Module functions
+void corner_detection_init(void);
+bool_t corner_detection_func(struct image_t* img);
 
 #endif /* COLORFILTER_CV_PLUGIN_H */
