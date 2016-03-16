@@ -100,6 +100,7 @@ bool_t corner_detection_func(struct image_t* img)
   // Copy new image to old image
   image_copy(&img_gray, &img_old);
 
+  // This is not working
   float divergence = get_size_divergence(vectors, feature_cnt, 0);
 
   DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &divergence);
