@@ -18,15 +18,20 @@
 #include <stdlib.h>
 
 uint8_t safeToGoForwards=FALSE;
-int tresholdColorCount = 200;
 int32_t incrementForAvoidance;
 
 void obstacle_avoider_init() {
-	// Initialise random values
+
+	// Seed the random number generator with current time
 	srand(time(NULL));
+
+	//
 	chooseRandomIncrementAvoidance();
 }
+
 void obstacle_avoider_periodic() {
+
+	safeToGoForwards = TRUE;
 
 	//safeToGoForwards = color_count < tresholdColorCount;
 
@@ -35,6 +40,7 @@ void obstacle_avoider_periodic() {
 /**
  * Increases the NAV heading. Assumes heading is an INT32_ANGLE. It is bound in this function.
  */
+
 uint8_t increase_nav_heading(int32_t *heading, int32_t increment)
 {
   *heading = *heading + increment;
@@ -42,6 +48,7 @@ uint8_t increase_nav_heading(int32_t *heading, int32_t increment)
   INT32_ANGLE_NORMALIZE(*heading); // HEADING HAS INT32_ANGLE_FRAC....
   return FALSE;
 }
+
 uint8_t moveWaypointForwards(uint8_t waypoint, float distanceMeters){
 	  struct EnuCoor_i new_coor;
 	  struct EnuCoor_i *pos = stateGetPositionEnu_i(); // Get your current position
