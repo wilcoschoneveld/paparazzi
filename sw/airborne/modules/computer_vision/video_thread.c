@@ -43,6 +43,8 @@
 
 #include "mcu_periph/sys_time.h"
 
+#include "subsystems/datalink/telemetry.h"
+
 // include board for bottom_camera and front_camera on ARDrone2 and Bebop
 #include BOARD_CONFIG
 
@@ -192,6 +194,9 @@ static void *video_thread_function(void *data)
       fprintf(stderr, "video_thread: desired %i fps, only managing %.1f fps\n",
               video_thread.fps, 1000000.f / dt_us);
     }
+
+    float fps = 1000000.f / dt_us;
+    DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &fps);
 
     // Wait for a new frame (blocking)
     struct image_t img;

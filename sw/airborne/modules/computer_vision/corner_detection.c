@@ -44,8 +44,8 @@ struct image_t img_gray;
 struct image_t img_old;
 
 // Bad way to define but who cares
-#define POINTS_X 50
-#define POINTS_Y 30
+#define POINTS_X 10
+#define POINTS_Y 5
 struct point_t *grid;
 
 // declare utility functions
