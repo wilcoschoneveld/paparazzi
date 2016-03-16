@@ -36,7 +36,7 @@
 // Thresholds FAST
 uint8_t threshold  = 20;
 uint16_t min_dist  = 10;
-uint16_t x_padding = 30; // The padding in the x direction to not scan for corners
+uint16_t x_padding = 100; // The padding in the x direction to not scan for corners
 uint16_t y_padding = 100; // The padding in the y direction to not scan for corners
 
 // IMG = 272 x 272
@@ -45,7 +45,7 @@ struct image_t img_old;
 
 // Bad way to define but who cares
 #define POINTS_X 10
-#define POINTS_Y 5
+#define POINTS_Y 10
 struct point_t *grid;
 
 // declare utility functions
@@ -91,6 +91,13 @@ bool_t corner_detection_func(struct image_t* img)
   // Copy new image to old image
   image_copy(&img_gray, &img_old);
 
+  float sum = 0;
+
+  for (int i = 0; i < feature_cnt; ++i) {
+    sum += vectors[i].flow_x * vectors[i].flow_x + vectors[i].flow_y * vectors[i].flow_y;
+  }
+
+  DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &sum);
 
   // RUDIMENTARY YAW RATE CALCULATION
 //  float sumLEFT = 0;

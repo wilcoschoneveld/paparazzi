@@ -50,10 +50,10 @@
 
     <load name="obstacle_avoider.xml"/>
  
-    <!--<load name="video_rtp_stream.xml">-->
-      <!--<define name="VIEWVIDEO_QUALITY_FACTOR" value="80"/>-->
-      <!--<define name="VIEWVIDEO_DOWNSIZE_FACTOR" value="1"/>-->
-    <!--</load>-->
+    <load name="video_rtp_stream.xml">
+      <define name="VIEWVIDEO_QUALITY_FACTOR" value="80"/>
+      <define name="VIEWVIDEO_DOWNSIZE_FACTOR" value="1"/>
+    </load>
 
   </modules>
 

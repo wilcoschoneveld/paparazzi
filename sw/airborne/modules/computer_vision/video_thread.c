@@ -195,8 +195,8 @@ static void *video_thread_function(void *data)
               video_thread.fps, 1000000.f / dt_us);
     }
 
-    float fps = 1000000.f / dt_us;
-    DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &fps);
+//    float fps = 1000000.f / dt_us;
+//    DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &fps);
 
     // Wait for a new frame (blocking)
     struct image_t img;
