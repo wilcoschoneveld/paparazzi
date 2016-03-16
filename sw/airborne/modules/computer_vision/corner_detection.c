@@ -28,8 +28,6 @@
 #include "lib/vision/fast_rosten.h"
 #include "lib/vision/lucas_kanade.h"
 
-#include "opticflow/size_divergence.h"
-
 #include "subsystems/datalink/telemetry.h"
 
 #define IMG_WIDTH 272
@@ -46,25 +44,18 @@ struct image_t img_gray;
 struct image_t img_old;
 
 // Bad way to define but who cares
-#define POINTS_X 10
-#define POINTS_Y 10
+#define POINTS_X 50
+#define POINTS_Y 30
+struct point_t *grid;
 
-struct point_t grid[POINTS_X * POINTS_Y];
+// declare utility functions
+struct point_t* _init_grid(int width, int height);
+void _draw_line(struct image_t *img, int x);
 
 
 void corner_detection_init(void)
 {
-  // Initialize grid
-  int x_spacing = (IMG_WIDTH - 2 * x_padding) / (POINTS_X - 1);
-  int y_spacing = (IMG_HEIGHT - 2 * y_padding) / (POINTS_Y - 1);
-
-  for (int i = 0; i < POINTS_X; ++i) {
-    for (int j = 0; j < POINTS_Y; ++j) {
-      int idx = j * POINTS_X + i;
-      grid[idx].x = x_padding + x_spacing * i;
-      grid[idx].y = y_padding + y_spacing * j;
-    }
-  }
+  grid = _init_grid(POINTS_X, POINTS_Y);
 
   // Initialize images
   image_create(&img_gray, IMG_WIDTH, IMG_HEIGHT, IMAGE_GRAYSCALE);
@@ -100,12 +91,72 @@ bool_t corner_detection_func(struct image_t* img)
   // Copy new image to old image
   image_copy(&img_gray, &img_old);
 
-  // This is not working
-  float divergence = get_size_divergence(vectors, feature_cnt, 0);
 
-  DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &divergence);
+  // RUDIMENTARY YAW RATE CALCULATION
+//  float sumLEFT = 0;
+//  float sumRIGHT = 0;
+//  int countLEFT = 1; // start with 1 otherwise divide by 0 possibly, slight error with low amount of points
+//  int countRIGHT = 1;
+//
+//  for (int i = 0; i < feature_cnt; ++i) {
+//    // Obtain horizontal velocity component
+//    float vel_x = vectors[i].flow_x; // possibly scale?
+//
+//    // Check if flow vector is RIGHT
+//    if (vectors[i].pos.x > IMG_WIDTH / 2) {
+//      sumRIGHT += vel_x;
+//      countRIGHT += 1;
+//    } else {
+//      sumLEFT += vel_x;
+//      countLEFT += 1;
+//    }
+//  }
+//
+//  // Scale the left and right summation by the vector count
+//  sumLEFT = sumLEFT / countLEFT;
+//  sumRIGHT = sumRIGHT / countRIGHT;
+//
+//  float divergence = sumLEFT - sumRIGHT;
+//
+//  _draw_line(img, IMG_WIDTH / 2 + divergence);
+//
+//  DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &divergence);
 
-  // TODO: why false?
   return TRUE;
 }
+
+
+
+void _draw_line(struct image_t* img, int x) {
+
+  struct point_t a, b;
+
+  a.x = x;
+  a.y = 0;
+  b.x = x;
+  b.y = IMG_HEIGHT;
+
+  image_draw_line(img, &a, &b);
+}
+
+
+struct point_t* _init_grid(int width, int height) {
+  int num_points = width * height;
+
+  struct point_t* points = malloc(sizeof(struct point_t) * num_points);
+
+  int x_spacing = (IMG_WIDTH - 2 * x_padding) / (width - 1);
+  int y_spacing = (IMG_HEIGHT - 2 * y_padding) / (height - 1);
+
+  for (int i = 0; i < width; ++i) {
+    for (int j = 0; j < height; ++j) {
+      int idx = j * width + i;
+      points[idx].x = x_padding + x_spacing * i;
+      points[idx].y = y_padding + y_spacing * j;
+    }
+  }
+
+  return points;
+}
+
 
