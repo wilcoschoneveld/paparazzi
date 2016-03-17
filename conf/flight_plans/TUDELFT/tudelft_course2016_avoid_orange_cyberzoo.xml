@@ -77,21 +77,29 @@
       <call fun="NavSetAltitudeReferenceHere()"/>
     </block>
 
-    <!-- Kill the throttle and wait in attitude mode for further instructions -->
+    <!-- Kill the throttle and wait -->
     <block name="Holding point">
       <call fun="NavKillThrottle()"/>
       <attitude pitch="0" roll="0" throttle="0" vmode="throttle"/>
     </block>
 
+    <!-- Start the engine and wait -->
     <block key="r" name="Start Engine">
       <call fun="NavResurrect()"/>
-      <attitude pitch="0" roll="0" throttle="0" until="FALSE" vmode="throttle"/>
+      <attitude pitch="0" roll="0" throttle="0" vmode="throttle"/>
     </block>
+
+    <block name="Takeoff2">
+      <call fun="NavSetWaypointHere(WP_STDBY)"/>
+      <stay wp="STDBY"/>
+    </block>
+
     <block key="t" name="Takeoff" strip_button="Takeoff" strip_icon="takeoff.png">
       <exception cond="stateGetPositionEnu_f()->z > 1.25" deroute="Standby"/>
       <call fun="NavSetWaypointHere(WP_CLIMB)"/>
       <stay climb="nav_climb_vspeed" vmode="climb" wp="CLIMB"/>
     </block>
+
     <block key="s" name="Standby" strip_button="Standby" strip_icon="home.png">
       <call fun="NavSetWaypointHere(WP_STDBY)"/>
       <stay wp="STDBY"/>
