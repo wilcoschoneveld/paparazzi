@@ -95,6 +95,15 @@
       <stay wp="STDBY"/>
     </block>
 
+    <block name="B">
+      <call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>
+      <go wp="GOAL"/>
+    </block>
+
+    <block name="A">
+      <stay wp="STDBY"/>
+    </block>
+
     <!-- Move forwards -->
     <block name="Go" strip_button="Go" strip_icon="flat_theme/right.png">
       <exception cond="!InsideObstacleZone(GetPosX(),GetPosY())" deroute="Return"/>
