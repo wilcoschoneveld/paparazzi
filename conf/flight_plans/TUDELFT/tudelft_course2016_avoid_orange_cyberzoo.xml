@@ -1,27 +1,45 @@
 <!DOCTYPE flight_plan SYSTEM "../flight_plan.dtd">
 
-<flight_plan alt="1.5" ground_alt="0" lat0="51.990634" lon0="4.376789" max_dist_from_home="8" name="Bebop avoid orange TU Delft Cyberzoo" security_height="0.4">
+<!-- Flight Plan centered in the Cyber Zoo -->
+<flight_plan
+        name="Flight Plan Group 05"
+        lat0="51.990634" lon0="4.376789"
+        ground_alt="0"
+        security_height="0.4"
+        max_dist_from_home="8"
+        alt="1.5">
+
+  <!-- Include headers to allow calling of functions that are not part of a module -->
   <header>
-#include "autopilot.h"
-#include "subsystems/ahrs.h"
-#include "subsystems/electrical.h"
-#include "subsystems/datalink/datalink.h"
-</header>
+    #include "autopilot.h"
+    #include "subsystems/ahrs.h"
+    #include "subsystems/electrical.h"
+    #include "subsystems/datalink/datalink.h"
+  </header>
+
+  <!-- Waypoints used in this flight plan -->
   <waypoints>
+    <!-- Mission waypoints -->
     <waypoint name="HOME" x="0.0" y="0.0"/>
     <waypoint name="CLIMB" x="1.2" y="-0.6"/>
     <waypoint name="GOAL" x="2.0" y="2.0"/>
     <waypoint height="1.342321" name="STDBY" x="-0.7" y="-0.8"/>
     <waypoint name="TD" x="0.8" y="-1.7"/>
+
+    <!-- Corners of the Cyber Zoo -->
     <waypoint lat="51.9906213" lon="4.3768628" name="_CZ1"/>
     <waypoint lat="51.9905874" lon="4.3767766" name="_CZ2"/>
     <waypoint lat="51.9906409" lon="4.3767226" name="_CZ3"/>
     <waypoint lat="51.990667" lon="4.376806" name="_CZ4"/>
+
+    <!-- Corners of the obstacle zone -->
     <waypoint lat="51.990624" lon="4.376845" name="_OZ1"/>
     <waypoint lat="51.990601" lon="4.376782" name="_OZ2"/>
     <waypoint lat="51.990638" lon="4.376748" name="_OZ3"/>
     <waypoint lat="51.990657" lon="4.376804" name="_OZ4"/>
   </waypoints>
+
+  <!-- Sectors used in this flight plan -->
   <sectors>
     <sector color="red" name="CyberZoo">
       <corner name="_CZ1"/>
@@ -29,32 +47,42 @@
       <corner name="_CZ3"/>
       <corner name="_CZ4"/>
     </sector>
-    <sector color="#FF9922" name="ObstacleZone">
+    <sector color="blue" name="ObstacleZone">
       <corner name="_OZ1"/>
       <corner name="_OZ2"/>
       <corner name="_OZ3"/>
       <corner name="_OZ4"/>
     </sector>
   </sectors>
+
+  <!-- Global exceptions -->
   <exceptions>
     <exception cond="!InsideCyberZoo(GetPosX(), GetPosY())" deroute="Standby"/>
-    <exception cond="datalink_time > 2" deroute="Land here"/>
-    <exception cond="electrical.bat_low && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Flare')) && !(nav_block == IndexOfBlock('Landed'))" deroute="Land"/>
-    <exception cond="electrical.bat_critical && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Flare')) && !(nav_block == IndexOfBlock('Landed'))" deroute="Land here"/>
+    <!--<exception cond="datalink_time > 2" deroute="Standby"/>-->
+    <!--<exception cond="electrical.bat_low && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Flare')) && !(nav_block == IndexOfBlock('Landed'))" deroute="Land"/>-->
+    <!--<exception cond="electrical.bat_critical && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Flare')) && !(nav_block == IndexOfBlock('Landed'))" deroute="Land here"/>-->
   </exceptions>
+
+  <!-- Blocks describing the units of the mission -->
   <blocks>
+    <!-- Kill the throttle and wait for GPS fix -->
     <block name="Wait GPS">
       <call fun="NavKillThrottle()"/>
       <while cond="!GpsFixValid()"/>
     </block>
+
+    <!-- Wait 5 seconds and then set altitude reference -->
     <block name="Geo init">
-      <while cond="LessThan(NavBlockTime(), 2)"/>
+      <while cond="LessThan(NavBlockTime(), 5)"/>
       <call fun="NavSetAltitudeReferenceHere()"/>
     </block>
+
+    <!-- Kill the throttle and wait in attitude mode for further instructions -->
     <block name="Holding point">
       <call fun="NavKillThrottle()"/>
-      <attitude pitch="0" roll="0" throttle="0" until="FALSE" vmode="throttle"/>
+      <attitude pitch="0" roll="0" throttle="0" vmode="throttle"/>
     </block>
+
     <block key="r" name="Start Engine">
       <call fun="NavResurrect()"/>
       <attitude pitch="0" roll="0" throttle="0" until="FALSE" vmode="throttle"/>
@@ -121,4 +149,6 @@
       <attitude pitch="0" roll="0" throttle="0" until="FALSE" vmode="throttle"/>
     </block>
   </blocks>
+
+  <!-- End of flight plan -->
 </flight_plan>
