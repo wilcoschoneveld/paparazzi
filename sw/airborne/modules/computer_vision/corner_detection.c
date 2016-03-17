@@ -33,19 +33,29 @@
 #define IMG_WIDTH 272
 #define IMG_HEIGHT 272
 
-// Thresholds FAST
+#define POINTS_X 10
+#define POINTS_Y 10
+
+// FAST SETTINGS
+bool_t fast_show_features = FALSE;
 uint8_t fast_threshold = 20;
-uint16_t min_dist  = 10;
-uint16_t x_padding = 100; // The padding in the x direction to not scan for corners
-uint16_t y_padding = 100; // The padding in the y direction to not scan for corners
+uint16_t fast_min_dist  = 10;
+uint16_t fast_x_padding = 100;
+uint16_t fast_y_padding = 100;
+
+// LK SETTINGS
+bool_t lk_show_optical_flow = TRUE;
+uint16_t lk_half_window_size = 10;
+uint16_t lk_subpixel_factor = 10;
+uint8_t lk_max_iterations = 10;
+uint8_t lk_step_threshold = 2;
+uint16_t lk_max_points = POINTS_X * POINTS_Y;
 
 // IMG = 272 x 272
 struct image_t img_gray;
 struct image_t img_old;
 
-// Define the grid size
-#define POINTS_X 10
-#define POINTS_Y 10
+// Define the grid
 struct point_t *grid;
 
 // declare utility functions
@@ -74,19 +84,33 @@ bool_t corner_detection_func(struct image_t* img)
   image_to_grayscale(img, &img_gray);
 
   // Find features to track
-  struct point_t *features = fast9_detect(&img_gray, fast_threshold, min_dist, x_padding, y_padding, &feature_cnt);
+  struct point_t *features = fast9_detect(
+          &img_gray,
+          fast_threshold,
+          fast_min_dist,
+          fast_x_padding,
+          fast_y_padding,
+          &feature_cnt);
 
   // Show fast features found
-  image_show_points(img, features, feature_cnt);
+  if (fast_show_features)
+    image_show_points(img, features, feature_cnt);
 
   // Calculate optical flow from features found
-//  struct flow_t *vectors = opticFlowLK(&img_gray, &img_old, grid, &feature_cnt, 10, 10, 10, 2, POINTS_X * POINTS_Y);
-//
-//  // Show optical flow on original image
-//  image_show_flow(img, vectors, feature_cnt, 10);
-//
-//  // Free vector memory
-//  free(vectors);
+  struct flow_t *vectors = opticFlowLK(
+          &img_gray,
+          &img_old,
+          features,
+          &feature_cnt,
+          lk_half_window_size,
+          lk_subpixel_factor,
+          lk_max_iterations,
+          lk_step_threshold,
+          lk_max_points);
+
+  // Show optical flow on original image
+  if (lk_show_optical_flow)
+    image_show_flow(img, vectors, feature_cnt, lk_subpixel_factor);
 
   // Copy new image to old image
   image_copy(&img_gray, &img_old);
@@ -129,6 +153,10 @@ bool_t corner_detection_func(struct image_t* img)
 //
 //  DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &divergence);
 
+  // Free memory
+  free(features); features = NULL;
+  free(vectors); vectors = NULL;
+
   return TRUE;
 }
 
@@ -152,14 +180,14 @@ struct point_t* _init_grid(int width, int height) {
 
   struct point_t* points = malloc(sizeof(struct point_t) * num_points);
 
-  int x_spacing = (IMG_WIDTH - 2 * x_padding) / (width - 1);
-  int y_spacing = (IMG_HEIGHT - 2 * y_padding) / (height - 1);
+  int x_spacing = (IMG_WIDTH - 2 * fast_x_padding) / (width - 1);
+  int y_spacing = (IMG_HEIGHT - 2 * fast_y_padding) / (height - 1);
 
   for (int i = 0; i < width; ++i) {
     for (int j = 0; j < height; ++j) {
       int idx = j * width + i;
-      points[idx].x = x_padding + x_spacing * i;
-      points[idx].y = y_padding + y_spacing * j;
+      points[idx].x = fast_x_padding + x_spacing * i;
+      points[idx].y = fast_y_padding + y_spacing * j;
     }
   }
 

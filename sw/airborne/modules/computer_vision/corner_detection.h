@@ -31,7 +31,18 @@
 #include "modules/computer_vision/cv.h"
 
 // Module settings
+extern bool_t fast_show_features;
 extern uint8_t fast_threshold;
+extern uint16_t fast_min_dist;
+extern uint16_t fast_x_padding;
+extern uint16_t fast_y_padding;
+
+extern bool_t lk_show_optical_flow;
+extern uint16_t lk_half_window_size;
+extern uint16_t lk_subpixel_factor;
+extern uint8_t lk_max_iterations;
+extern uint8_t lk_step_threshold;
+extern uint16_t lk_max_points;
 
 // Module functions
 void corner_detection_init(void);

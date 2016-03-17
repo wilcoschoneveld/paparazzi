@@ -7,8 +7,20 @@
 
   <settings>
     <dl_settings>
-      <dl_settings NAME="ColorDetection">
-        <dl_setting var="fast_threshold" min="0" step="1" max="100" />
+      <dl_settings name="CornerDetection">
+        <dl_setting var="fast_show_features" min="0" step="1" max="1" />
+        <dl_setting var="lk_show_optical_flow" min="0" step="1" max="1" />
+
+        <dl_setting var="fast_threshold" min="0" step="1" max="50" />
+        <dl_setting var="fast_min_dist" min="0" step="1" max="30" />
+        <dl_setting var="fast_x_padding" min="0" step="1" max="135" />
+        <dl_setting var="fast_y_padding" min="0" step="1" max="135" />
+
+        <dl_setting var="lk_half_window_size" min="1" step="1" max="30" />
+        <dl_setting var="lk_subpixel_factor" min="1" step="1" max="30" />
+        <dl_setting var="lk_max_iterations" min="1" step="1" max="20" />
+        <dl_setting var="lk_step_threshold" min="0" step="1" max="5" />
+        <dl_setting var="lk_max_points" min="1" step="1" max="100" />
       </dl_settings>
     </dl_settings>
   </settings>
