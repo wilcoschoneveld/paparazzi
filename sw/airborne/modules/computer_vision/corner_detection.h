@@ -20,7 +20,7 @@
  */
 
 /**
- * @file modules/computer_vision/colorfilter.h
+ * @file modules/computer_vision/corner_detection.h
  */
 
 #ifndef CORNER_DETECTION_CV_PLUGIN_H
@@ -48,4 +48,4 @@ extern uint16_t lk_max_points;
 void corner_detection_init(void);
 bool_t corner_detection_func(struct image_t* img);
 
-#endif /* COLORFILTER_CV_PLUGIN_H */
+#endif
