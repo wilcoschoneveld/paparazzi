@@ -864,7 +864,9 @@
   </message>
 
   <message name="OPTICAL_FLOW" id="108">
-    <field name="fps" type="float" />
+    <field name="feature_cnt" type="uint16" />
+    <field name="divergence" type="float" />
+    <field name="threshold" type="uint8" />
   </message>
 
   <message name="MULTIGAZE_METERS" id="109">
