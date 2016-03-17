@@ -14,7 +14,6 @@
 #define OBSTACLE_AVOIDER_H
 #include <inttypes.h>
 
-extern uint8_t safeToGoForwards;
 extern int32_t incrementForAvoidance;
 extern void obstacle_avoider_init(void);
 extern void obstacle_avoider_periodic(void);

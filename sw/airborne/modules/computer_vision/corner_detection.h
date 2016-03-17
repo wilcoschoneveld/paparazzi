@@ -44,6 +44,18 @@ extern uint8_t lk_max_iterations;
 extern uint8_t lk_step_threshold;
 extern uint16_t lk_max_points;
 
+// Featureless iteration
+extern uint8_t Featurless;
+
+// Divergence
+extern float divergence;
+
+// Derotation of the flow
+struct state_t {
+    float phi;                   ///< Roll
+    float theta;                 ///< Pith
+};
+
 // Module functions
 void corner_detection_init(void);
 bool_t corner_detection_func(struct image_t* img);

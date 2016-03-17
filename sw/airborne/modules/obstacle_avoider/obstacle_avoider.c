@@ -17,7 +17,6 @@
 #include <time.h>
 #include <stdlib.h>
 
-uint8_t safeToGoForwards=FALSE;
 int32_t incrementForAvoidance;
 
 void obstacle_avoider_init() {
@@ -30,8 +29,6 @@ void obstacle_avoider_init() {
 }
 
 void obstacle_avoider_periodic() {
-
-	safeToGoForwards = TRUE;
 
 	//safeToGoForwards = color_count < tresholdColorCount;
 
