@@ -5,6 +5,14 @@
     <description>CornerDetection</description>
   </doc>
 
+  <settings>
+    <dl_settings>
+      <dl_settings NAME="ColorDetection">
+        <dl_setting var="fast_threshold" min="0" step="1" max="100" />
+      </dl_settings>
+    </dl_settings>
+  </settings>
+
   <depends>video_thread</depends>
 
   <header>

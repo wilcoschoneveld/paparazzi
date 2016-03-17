@@ -30,6 +30,9 @@
 
 #include "modules/computer_vision/cv.h"
 
+// Module settings
+extern uint8_t fast_threshold;
+
 // Module functions
 void corner_detection_init(void);
 bool_t corner_detection_func(struct image_t* img);

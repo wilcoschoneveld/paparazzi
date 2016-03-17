@@ -34,7 +34,7 @@
 #define IMG_HEIGHT 272
 
 // Thresholds FAST
-uint8_t threshold  = 20;
+uint8_t fast_threshold = 20;
 uint16_t min_dist  = 10;
 uint16_t x_padding = 100; // The padding in the x direction to not scan for corners
 uint16_t y_padding = 100; // The padding in the y direction to not scan for corners
@@ -43,7 +43,7 @@ uint16_t y_padding = 100; // The padding in the y direction to not scan for corn
 struct image_t img_gray;
 struct image_t img_old;
 
-// Bad way to define but who cares
+// Define the grid size
 #define POINTS_X 10
 #define POINTS_Y 10
 struct point_t *grid;
@@ -74,30 +74,30 @@ bool_t corner_detection_func(struct image_t* img)
   image_to_grayscale(img, &img_gray);
 
   // Find features to track
-//  struct point_t *features = fast9_detect(&img_gray, threshold, min_dist, x_padding, y_padding, &feature_cnt);
+  struct point_t *features = fast9_detect(&img_gray, fast_threshold, min_dist, x_padding, y_padding, &feature_cnt);
 
   // Show fast features found
-//  image_show_points(img, features, feature_cnt);
+  image_show_points(img, features, feature_cnt);
 
   // Calculate optical flow from features found
-  struct flow_t *vectors = opticFlowLK(&img_gray, &img_old, grid, &feature_cnt, 10, 10, 10, 2, POINTS_X * POINTS_Y);
-
-  // Show optical flow on original image
-  image_show_flow(img, vectors, feature_cnt, 10);
-
-  // Free vector memory
-  free(vectors);
+//  struct flow_t *vectors = opticFlowLK(&img_gray, &img_old, grid, &feature_cnt, 10, 10, 10, 2, POINTS_X * POINTS_Y);
+//
+//  // Show optical flow on original image
+//  image_show_flow(img, vectors, feature_cnt, 10);
+//
+//  // Free vector memory
+//  free(vectors);
 
   // Copy new image to old image
   image_copy(&img_gray, &img_old);
 
-  float sum = 0;
+//  float sum = 0;
+//
+//  for (int i = 0; i < feature_cnt; ++i) {
+//    sum += vectors[i].flow_x * vectors[i].flow_x + vectors[i].flow_y * vectors[i].flow_y;
+//  }
 
-  for (int i = 0; i < feature_cnt; ++i) {
-    sum += vectors[i].flow_x * vectors[i].flow_x + vectors[i].flow_y * vectors[i].flow_y;
-  }
-
-  DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &sum);
+//  DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &sum);
 
   // RUDIMENTARY YAW RATE CALCULATION
 //  float sumLEFT = 0;
