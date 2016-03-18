@@ -25,8 +25,9 @@ int32_t incrementForAvoidance;
 float vector_diver[MEMORY];
 struct divergence_t diver;
 
-float threshold_diver = 20;
-int threshold_obstacle = 3;
+float threshold_diver = 0.1;
+float max_diver = 0.6;
+int threshold_obstacle = 4;
 
 int counter_diver;
 
@@ -40,51 +41,51 @@ void obstacle_avoider_init() {
 	srand(time(NULL));
 	chooseRandomIncrementAvoidance();
 
-//	// Initialize the variables related with obstacle detection.
-//	diver.OLD_5 = 0;
-//	diver.OLD_4 = 0;
-//	diver.OLD_3 = 0;
-//	diver.OLD_2 = 0;
-//	diver.OLD_1 = 0;
-//	diver.NOW   = 0;
+	// Initialize the variables related with obstacle detection.
+	diver.OLD_5 = 0;
+	diver.OLD_4 = 0;
+	diver.OLD_3 = 0;
+	diver.OLD_2 = 0;
+	diver.OLD_1 = 0;
+	diver.NOW   = 0;
 
 }
 
 void obstacle_avoider_periodic() {
 
-//	// Update current value of divergence
-//	diver.NOW   = divergence;
-//
-//	// Update the vector
-//	vector_diver[0] = diver.OLD_5;
-//	vector_diver[1] = diver.OLD_4;
-//	vector_diver[2] = diver.OLD_3;
-//	vector_diver[3] = diver.OLD_2;
-//	vector_diver[4] = diver.OLD_1;
-//	vector_diver[5] = diver.NOW;
-//
-//	// Check the number of positives above the threshold
-//	counter_diver = 0;
-//	for (int i = 0; i <MEMORY ; ++i) {
-//		if (vector_diver[i] > threshold_diver) {
-//			counter_diver++;
-//		}
-//	}
-//
-//	// Check if we are facing an obstacle
-//	Object = FALSE;
-//	if (counter_diver >= threshold_obstacle) {
-//		Object = TRUE;
-//	}
-//
-//   // Prepare variables for the next iteration
-//	diver.OLD_5 = diver.OLD_4;
-//	diver.OLD_4 = diver.OLD_3;
-//	diver.OLD_3 = diver.OLD_2;
-//	diver.OLD_2 = diver.OLD_1;
-//	diver.OLD_1 = diver.NOW;
-//
-//	DOWNLINK_SEND_OBJECT_DETECTION(DefaultChannel, DefaultDevice, &counter_diver);
+	// Update current value of divergence
+	diver.NOW   = divergence;
+
+	// Update the vector
+	vector_diver[0] = diver.OLD_5;
+	vector_diver[1] = diver.OLD_4;
+	vector_diver[2] = diver.OLD_3;
+	vector_diver[3] = diver.OLD_2;
+	vector_diver[4] = diver.OLD_1;
+	vector_diver[5] = diver.NOW;
+
+	// Check the number of positives above the threshold
+	counter_diver = 0;
+	for (int i = 0; i <MEMORY ; ++i) {
+		if (vector_diver[i] > threshold_diver && vector_diver[i] < max_diver) {
+			counter_diver++;
+		}
+	}
+
+	// Check if we are facing an obstacle
+	Object = FALSE;
+	if (counter_diver >= threshold_obstacle) {
+		Object = TRUE;
+	}
+
+   // Prepare variables for the next iteration
+	diver.OLD_5 = diver.OLD_4;
+	diver.OLD_4 = diver.OLD_3;
+	diver.OLD_3 = diver.OLD_2;
+	diver.OLD_2 = diver.OLD_1;
+	diver.OLD_1 = diver.NOW;
+
+	DOWNLINK_SEND_OBJECT_DETECTION(DefaultChannel, DefaultDevice, &counter_diver);
 
 }
 

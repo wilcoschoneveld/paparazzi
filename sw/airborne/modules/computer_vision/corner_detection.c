@@ -64,12 +64,23 @@ struct state_t temp_state;
 // declare utility functions
 struct point_t* _init_grid(int width, int height);
 void _draw_line(struct image_t *img, int x);
+uint16_t detect_orange(struct image_t *input, struct image_t *output, uint8_t y_m, uint8_t y_M, uint8_t u_m, uint8_t u_M, uint8_t v_m, uint8_t v_M);
 
 // Featureless iteration
 uint8_t Featurless = FALSE;
 
 // Result
 float divergence;
+
+// Color filter settings
+uint8_t color_lum_min = 105;
+uint8_t color_lum_max = 205;
+uint8_t color_cb_min  = 52;
+uint8_t color_cb_max  = 140;
+uint8_t color_cr_min  = 180;
+uint8_t color_cr_max  = 255;
+
+int color_count = 0;
 
 void corner_detection_init(void)
 {
@@ -93,6 +104,18 @@ bool_t corner_detection_func(struct image_t* img)
 {
   // Storage for feature & vector count
   uint16_t feature_cnt;
+
+  // Use a orange detector
+  color_count = 0;
+  color_count = detect_orange(
+          img,
+          img,
+          color_lum_min,
+          color_lum_max,
+          color_cb_min,
+          color_cb_max,
+          color_cr_min,
+          color_cr_max);
 
   // Convert image to grayscale
   image_to_grayscale(img, &img_gray);
@@ -121,7 +144,7 @@ bool_t corner_detection_func(struct image_t* img)
       free(features);
       image_copy(&img_gray, &img_old);
       divergence = 0;
-      DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &feature_cnt, &divergence, &fast_threshold);
+      DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &feature_cnt, &divergence, &fast_threshold, &color_count);
       return TRUE;
   }
 
@@ -145,6 +168,8 @@ bool_t corner_detection_func(struct image_t* img)
   for (int i = 0; i <feature_cnt ; ++i) {
     if (vectors[i].pos.y > (IMG_HEIGHT / 2) * lk_subpixel_factor) {
       vectors[i].flow_x = 0;
+      vectors[i].flow_y = 0;
+    } else {
       vectors[i].flow_y = 0;
     }
   }
@@ -184,7 +209,7 @@ bool_t corner_detection_func(struct image_t* img)
   // Copy new image to old image
   image_copy(&img_gray, &img_old);
 
-  DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &feature_cnt, &divergence, &fast_threshold);
+  DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &feature_cnt, &divergence, &fast_threshold, &color_count);
 
   // Free memory
   free(features); features = NULL;
@@ -223,4 +248,38 @@ struct point_t* _init_grid(int width, int height) {
   }
 
   return points;
+}
+
+
+uint16_t detect_orange(struct image_t *input, struct image_t *output, uint8_t y_m, uint8_t y_M, uint8_t u_m,
+                                uint8_t u_M, uint8_t v_m, uint8_t v_M)
+{
+  uint16_t cnt = 0;
+  uint8_t *source = input->buf;
+  uint8_t *dest = output->buf;
+
+  // Copy the creation timestamp (stays the same)
+  memcpy(&output->ts, &input->ts, sizeof(struct timeval));
+
+  // Go trough all the pixels
+  for (uint16_t y = 0; y < output->h; y++) {
+    for (uint16_t x = 0; x < output->w; x += 2) {
+      // Check if the color is inside the specified values
+      if (
+              (dest[1] >= y_m)
+              && (dest[1] <= y_M)
+              && (dest[0] >= u_m)
+              && (dest[0] <= u_M)
+              && (dest[2] >= v_m)
+              && (dest[2] <= v_M)
+              ) {
+        cnt ++;
+      }
+
+      // Go to the next 2 pixels
+      dest += 4;
+      source += 4;
+    }
+  }
+  return cnt;
 }

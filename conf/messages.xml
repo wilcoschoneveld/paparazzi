@@ -867,6 +867,7 @@
     <field name="feature_cnt" type="uint16" />
     <field name="divergence" type="float" />
     <field name="threshold" type="uint8" />
+    <field name="orange" type="int32" />
   </message>
 
   <message name="MULTIGAZE_METERS" id="109">
