@@ -45,7 +45,7 @@ extern uint8_t lk_step_threshold;
 extern uint16_t lk_max_points;
 
 // Featureless iteration
-extern uint8_t Featurless;
+extern uint8_t Featureless;
 
 // Divergence
 extern float divergence;
