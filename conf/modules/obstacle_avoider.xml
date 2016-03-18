@@ -4,13 +4,18 @@
   <doc>
     <description>Set of functions used for autonomous flight</description>
   </doc>
+
   <header>
     <file name="obstacle_avoider.h"/>
   </header>
+
   <init fun="obstacle_avoider_init()"/>
+
   <periodic fun="obstacle_avoider_periodic()" freq="4"/>
+
   <makefile>
     <file name="obstacle_avoider.c"/>
   </makefile>
+
 </module>
 

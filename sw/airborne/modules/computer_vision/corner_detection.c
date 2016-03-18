@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015
+ * Copyright (C) Mavlabcourse 2016 - Group 05
  *
  * This file is part of Paparazzi.
  *
@@ -35,7 +35,6 @@
 #define IMG_HEIGHT 272
 
 // THIS NEEDS TO BE MODIFIED.
-
 #define FOV_W 2.968253968
 #define FOV_H 2.968253968
 
@@ -142,6 +141,7 @@ bool_t corner_detection_func(struct image_t* img)
           lk_step_threshold,
           lk_max_points);
 
+  // Narrow the window with relevant optical flow
   for (int i = 0; i <feature_cnt ; ++i) {
     if (vectors[i].pos.y > (IMG_HEIGHT / 2) * lk_subpixel_factor) {
       vectors[i].flow_x = 0;
@@ -153,12 +153,13 @@ bool_t corner_detection_func(struct image_t* img)
   if (lk_show_optical_flow)
     image_show_flow(img, vectors, feature_cnt, lk_subpixel_factor);
 
-//   Derotate the flow
+  // Derotate the flow
   temp_state.phi   = stateGetNedToBodyEulers_f()->phi;
   temp_state.theta = stateGetNedToBodyEulers_f()->theta;
-
   float diff_flow_x = (temp_state.phi - prev_state.phi) * IMG_WIDTH / FOV_W;
   float diff_flow_y = (temp_state.theta - prev_state.theta) * IMG_HEIGHT / FOV_H;
+  prev_state.phi    = temp_state.phi;
+  prev_state.theta  = temp_state.theta;
 
   for (int i = 0; i <feature_cnt ; ++i) {
       vectors[i].flow_x = vectors[i].flow_x - diff_flow_x * 10;
@@ -223,5 +224,3 @@ struct point_t* _init_grid(int width, int height) {
 
   return points;
 }
-
-

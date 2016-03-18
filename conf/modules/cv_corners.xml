@@ -32,9 +32,6 @@
   </header>
 
   <init fun="corner_detection_init()"/>
-  <makefile>
-    
-  </makefile>
 
   <makefile target="ap">
     <!-- Include the needed Computer Vision files -->
@@ -54,12 +51,6 @@
     <file name="lucas_kanade.c" dir="modules/computer_vision/lib/vision"/>
     <file name="linear_flow_fit.c" dir="modules/computer_vision/opticflow"/>
   </makefile>
-
-
-
-
-
-
 
 </module>
 

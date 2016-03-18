@@ -21,5 +21,18 @@ extern uint8_t moveWaypointForwards(uint8_t waypoint, float distanceMeters);
 extern uint8_t increase_nav_heading(int32_t *heading, int32_t increment);
 extern uint8_t chooseRandomIncrementAvoidance(void);
 
+// Divergence condition
+struct divergence_t {
+    float OLD_5;
+    float OLD_4;
+    float OLD_3;
+    float OLD_2;
+    float OLD_1;
+    float NOW;
+};
+
+// Object detection
+extern uint8_t Object;
+
 #endif
 

@@ -894,7 +894,9 @@
     <field name="servo" type="uint16[]"/>
   </message>
 
-  <!--112 is free -->
+   <message name="OBJECT_DETECTION" id="112">
+     <field name="counter_diver" type="int32" />
+   </message>
 
   <message name="MLX_SERIAL" id="113">
     <field name="serial0" type="uint32"/>
