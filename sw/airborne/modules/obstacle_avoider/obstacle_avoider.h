@@ -1,13 +1,12 @@
 /*
- * Copyright (C) Roland Meertens
+ * Copyright (C) Group 05
  *
  * This file is part of paparazzi
  *
  */
 /**
- * @file "modules/orange_avoider/orange_avoider.h"
- * @author Roland Meertens
- * Example on how to use the colours detected to avoid orange pole in the cyberzoo
+ * @file "modules/orange_avoider/obstacle_avoider.h"
+ * @author Group 05
  */
 
 #ifndef OBSTACLE_AVOIDER_H
@@ -20,16 +19,7 @@ extern void obstacle_avoider_periodic(void);
 extern uint8_t moveWaypointForwards(uint8_t waypoint, float distanceMeters);
 extern uint8_t increase_nav_heading(int32_t *heading, int32_t increment);
 extern uint8_t chooseRandomIncrementAvoidance(void);
-
-// Divergence condition
-struct divergence_t {
-    float OLD_5;
-    float OLD_4;
-    float OLD_3;
-    float OLD_2;
-    float OLD_1;
-    float NOW;
-};
+extern uint8_t changeHeading_Featureless(void);
 
 // Divergence condition
 struct exceptions_t {
@@ -38,8 +28,15 @@ struct exceptions_t {
     float NOW;
 };
 
-// Object detection
-extern uint8_t Object;
+// Featureless region
+extern int featureless_indicator[4];
+extern float changeHeading_amount;
+
+// Exceptions
+extern uint8_t TURNING;
+extern uint8_t FEATURELESS;
+extern uint8_t FRONTAL_OBSTACLE;
+extern uint8_t SIDE_OBSTACLE;
 
 #endif
 

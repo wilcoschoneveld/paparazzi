@@ -907,14 +907,7 @@
   </message>
 
    <message name="OBJECT_DETECTION" id="112">
-     <field name="TURNING" type="uint8" />
-     <field name="FEATURELESS" type="uint8" />
-     <field name="FEATURELESS_RIGHT" type="uint8" />
-     <field name="FEATURELESS_LEFT" type="uint8" />
-     <field name="TURN_RIGHT" type="uint8" />
-     <field name="TURN_LEFT" type="uint8" />
-     <field name="flag_right" type="int32" />
-     <field name="flag_left" type="int32" />
+     <field name="ChangeHeading" type="float" />
    </message>
 
   <message name="MLX_SERIAL" id="113">

@@ -19,53 +19,60 @@
 #include "subsystems/datalink/telemetry.h"
 #include <math.h>
 
-#define MEMORY_DIVERGENCE 6
-#define MEMORY_EXCEPTIONS 3
+#define MEMORY 3
 
 int32_t incrementForAvoidance;
 
-// Initialize structures
-struct divergence_t divergence_b;
-struct exceptions_t turning;
-struct exceptions_t featureless;
-struct exceptions_t featureless_right;
-struct exceptions_t featureless_left;
-
 // Initialize vectors
-float vector_divergence_b[MEMORY_DIVERGENCE];
-float vector_turning[MEMORY_EXCEPTIONS];
-float vector_featureless[MEMORY_EXCEPTIONS];
-float vector_featureless_right[MEMORY_EXCEPTIONS];
-float vector_featureless_left[MEMORY_EXCEPTIONS];
+float turning[MEMORY];
+float counter_RF[MEMORY];
+float counter_RC[MEMORY];
+float counter_LF[MEMORY];
+float counter_LC[MEMORY];
+float average_flow_RF[MEMORY];
+float average_flow_RC[MEMORY];
+float average_flow_LF[MEMORY];
+float average_flow_LC[MEMORY];
 
 // Counter
-int counter;
+int counter_turning;
 
-// Check if the aircraft is turning
+// Change heading
+float changeHeading_amount = 0;
+
+// FIRST CONDITION: Check if the aircraft is turning
 float threshold_turning = 0.2;
+
 uint8_t TURNING = FALSE;
 
-// Featureless object in the front
-int threshold_featureless = 5;
+// SECOND CONDITION: Check featureless regions
+float counter_average[4];
+
+int threshold_feature_far = 2;
+int threshold_feature_close = 2;
+
 uint8_t FEATURELESS = FALSE;
+int featureless_indicator[4];
 
-// Featureless object in the right
-int threshold_featureless_sides = 3;
-uint8_t FEATURELESS_RIGHT = FALSE;
-uint8_t FEATURELESS_LEFT  = FALSE;
+float changeHeading_Featureless_Far   = 45;
+float changeHeading_Featureless_Close = 90;
 
-// Turn
-uint8_t TURN_RIGHT = FALSE;
-uint8_t TURN_LEFT  = FALSE;
-int flag_right = 0;
-int flag_left  = 0;
+// THIRD CONDITION: Check frontal obstacle
+float flow_average[4];
 
-// Check whether there is an obstacle
-int counter_positive;
-int counter_negative;
-float min_threshold = 1;
-float max_threshold = 5;
-int obstacle_threshold = 3;
+float frontal_threshold = 50;
+float changeHeading_OF_Frontal = 180;
+float changeHeading_OF_Lateral = 90;
+uint8_t FRONTAL_OBSTACLE = FALSE;
+
+// FOURTH CONDITION: Check side obstacles
+float sideClose_threshold = 50;
+float sideFar_threshold   = 50;
+float changeHeading_OF_sideClose = 30;
+float changeHeading_OF_sideFar   = 60;
+uint8_t SIDE_OBSTACLE = FALSE;
+
+
 
 void obstacle_avoider_init() {
 
@@ -73,171 +80,163 @@ void obstacle_avoider_init() {
 	srand(time(NULL));
 	chooseRandomIncrementAvoidance();
 
-	// Initialize the variables related with the balance of lateral optical flow.
-	divergence_b.OLD_5 = 0;
-	divergence_b.OLD_4 = 0;
-	divergence_b.OLD_3 = 0;
-	divergence_b.OLD_2 = 0;
-	divergence_b.OLD_1 = 0;
-	divergence_b.NOW   = 0;
-
 	// Initialize the variables related with turning
-	turning.OLD_2 = 0;
-	turning.OLD_1 = 0;
-	turning.NOW   = 0;
+	turning[0] = 0;
+	turning[1] = 0;
 
-	// Initialize the variables related with featureless objects
-	featureless.OLD_2 = 0;
-	featureless.OLD_1 = 0;
-	featureless.NOW   = 0;
+	// Initialize the variables related with feature detection
+	counter_RF[0] = 0;
+	counter_RF[1] = 0;
 
-	featureless_right.OLD_2 = 0;
-	featureless_right.OLD_1 = 0;
-	featureless_right.NOW   = 0;
+	counter_RC[0] = 0;
+	counter_RC[1] = 0;
 
-	featureless_left.OLD_2 = 0;
-	featureless_left.OLD_1 = 0;
-	featureless_left.NOW   = 0;
+	counter_LF[0] = 0;
+	counter_LF[1] = 0;
 
+	counter_LC[0] = 0;
+	counter_LC[1] = 0;
+
+	// Initialize the variables related with optical flow
+	average_flow_RF[0] = 0;
+	average_flow_RF[1] = 0;
+
+	average_flow_RC[0] = 0;
+	average_flow_RC[1] = 0;
+
+	average_flow_LF[0] = 0;
+	average_flow_LF[1] = 0;
+
+	average_flow_LC[0] = 0;
+	average_flow_LC[1] = 0;
 }
 
 void obstacle_avoider_periodic() {
 
+	// Initialize variables
+	TURNING = FALSE;
+	FEATURELESS = FALSE;
+	FRONTAL_OBSTACLE = FALSE;
+	SIDE_OBSTACLE = FALSE;
+	changeHeading_amount = 0;
+
 	// Update current values
-	divergence_b.NOW      = divergence;
-	turning.NOW           = yaw_rate;
-	featureless.NOW       = feature_cnt;
-	featureless_right.NOW = counter_right;
-	featureless_left.NOW  = counter_left;
-
-	// Update vectors
-	vector_divergence_b[0] = divergence_b.OLD_5;
-	vector_divergence_b[1] = divergence_b.OLD_4;
-	vector_divergence_b[2] = divergence_b.OLD_3;
-	vector_divergence_b[3] = divergence_b.OLD_2;
-	vector_divergence_b[4] = divergence_b.OLD_1;
-	vector_divergence_b[5] = divergence_b.NOW;
-
-	vector_turning[0] = turning.OLD_2;
-	vector_turning[1] = turning.OLD_1;
-	vector_turning[2] = turning.NOW;
-
-	vector_featureless[0] = featureless.OLD_2;
-	vector_featureless[1] = featureless.OLD_1;
-	vector_featureless[2] = featureless.NOW;
-
-	vector_featureless_right[0] = featureless_right.OLD_2;
-	vector_featureless_right[1] = featureless_right.OLD_1;
-	vector_featureless_right[2] = featureless_right.NOW;
-
-	vector_featureless_left[0] = featureless_left.OLD_2;
-	vector_featureless_left[1] = featureless_left.OLD_1;
-	vector_featureless_left[2] = featureless_left.NOW;
+	turning[2]    = yaw_rate;
+	counter_RF[2] = feat_counters[3];
+	counter_RC[2] = feat_counters[2];
+	counter_LC[2] = feat_counters[1];
+	counter_LF[2] = feat_counters[0];
+	average_flow_RF[2] = average_flow[3];
+	average_flow_RC[2] = average_flow[2];
+	average_flow_LC[2] = average_flow[1];
+	average_flow_LF[2] = average_flow[0];
 
 	// Check turning
-	counter = 0;
-	for (int i = 0; i <MEMORY_EXCEPTIONS ; ++i) {
-		if (abs(vector_turning[i]) > threshold_turning) {
-			counter++;
+	counter_turning = 0;
+	for (int i = 0; i <MEMORY ; ++i) {
+		if (abs(turning[i]) > threshold_turning) {
+			counter_turning++;
 		}
 	}
 
-	TURNING = FALSE;
-	if (counter > 0) {
+	if (counter_turning > 0) {
 		TURNING = TRUE;
-	}
+	} else {
 
-	// Check frontal featureless
-	counter = 0;
-	for (int i = 0; i <MEMORY_EXCEPTIONS ; ++i) {
-		if (vector_featureless[i] < threshold_featureless) {
-			counter++;
+		// Check featureless regions
+		counter_average[0] = (counter_LF[2] + counter_LF[1] + counter_LF[0]) / 3;
+		counter_average[1] = (counter_LC[2] + counter_LC[1] + counter_LC[0]) / 3;
+		counter_average[2] = (counter_RC[2] + counter_RC[1] + counter_RC[0]) / 3;
+		counter_average[3] = (counter_RF[2] + counter_RF[1] + counter_RF[0]) / 3;
+
+		if (counter_average[0] < threshold_feature_far) {
+			featureless_indicator[0] = 1;
+			FEATURELESS = TRUE;
+		} else {
+			featureless_indicator[0] = 0;
 		}
-	}
 
-	FEATURELESS = FALSE;
-	if (counter == MEMORY_EXCEPTIONS) {
-		FEATURELESS = TRUE;
-	}
-
-	// Check lateral featureless
-	counter = 0;
-	for (int i = 0; i <MEMORY_EXCEPTIONS ; ++i) {
-		if (vector_featureless_right[i] < threshold_featureless_sides) {
-			counter++;
+		if (counter_average[1] < threshold_feature_close) {
+			featureless_indicator[1] = 1;
+			FEATURELESS = TRUE;
+		} else {
+			featureless_indicator[1] = 0;
 		}
-	}
 
-	FEATURELESS_RIGHT = FALSE;
-	if (counter == MEMORY_EXCEPTIONS) {
-		FEATURELESS_RIGHT = TRUE;
-	}
-
-	counter = 0;
-	for (int i = 0; i <MEMORY_EXCEPTIONS ; ++i) {
-		if (vector_featureless_left[i] < threshold_featureless_sides) {
-			counter++;
+		if (counter_average[2] < threshold_feature_close) {
+			featureless_indicator[2] = 1;
+			FEATURELESS = TRUE;
+		} else {
+			featureless_indicator[2] = 0;
 		}
-	}
 
-	FEATURELESS_LEFT = FALSE;
-	if (counter == MEMORY_EXCEPTIONS) {
-		FEATURELESS_LEFT = TRUE;
-	}
+		if (counter_average[3] < threshold_feature_far) {
+			featureless_indicator[3] = 1;
+			FEATURELESS = TRUE;
+		} else {
+			featureless_indicator[3] = 0;
+		}
 
-	// Turn right or turn left
-	TURN_RIGHT = FALSE;
-	TURN_LEFT  = FALSE;
-	flag_right = 0;
-	flag_left  = 0;
-	if (FEATURELESS_LEFT && !FEATURELESS_RIGHT) {
-		TURN_RIGHT = TRUE;
-		flag_right = 1;
-	} else if (!FEATURELESS_LEFT && FEATURELESS_RIGHT) {
-		TURN_LEFT = TRUE;
-		flag_left  = 1;
-	}
+		if (!FEATURELESS) {
+			// Check frontal obstacle
+			flow_average[0] = (average_flow_LF[2] + average_flow_LF[1] + average_flow_LF[0]) / 3;
+			flow_average[1] = (average_flow_LC[2] + average_flow_LC[1] + average_flow_LC[0]) / 3;
+			flow_average[2] = (average_flow_RC[2] + average_flow_RC[1] + average_flow_RC[0]) / 3;
+			flow_average[3] = (average_flow_RF[2] + average_flow_RF[1] + average_flow_RF[0]) / 3;
 
-	// If none of the previous conditions is met, then check if there's a lateral obstacle
-	if (!TURNING && !FEATURELESS && !TURN_RIGHT && !TURN_LEFT) {
-		counter_positive = 0;
-		counter_negative = 0;
-		for (int i = 0; i <MEMORY_DIVERGENCE ; ++i) {
-			if (vector_divergence_b[i] > min_threshold && vector_divergence_b[i] < max_threshold) {
-				counter_positive++;
-			} else if (vector_divergence_b[i] < -min_threshold && vector_divergence_b[i] > -max_threshold) {
-				counter_negative++;
+
+			if (flow_average[1] > frontal_threshold && flow_average[2] > frontal_threshold) {
+				FRONTAL_OBSTACLE = TRUE;
+				changeHeading_amount = changeHeading_OF_Frontal;
+			} else if (flow_average[1] > frontal_threshold) {
+				FRONTAL_OBSTACLE = TRUE;
+				changeHeading_amount = changeHeading_OF_Lateral;
+			} else if (flow_average[2] > frontal_threshold) {
+				FRONTAL_OBSTACLE = TRUE;
+				changeHeading_amount = -changeHeading_OF_Lateral;
 			}
-		}
-		if (counter_positive >= obstacle_threshold) {
-			TURN_LEFT = TRUE;
-			flag_left  = 1;
-		} else if (counter_negative >= obstacle_threshold) {
-			TURN_RIGHT = TRUE;
-			flag_right = 1;
+
+			if (!FRONTAL_OBSTACLE) {
+				// Check side obstacles
+
+				if (abs(flow_average[2] - flow_average[1]) > sideClose_threshold) {
+					SIDE_OBSTACLE = TRUE;
+					if (flow_average[2] > flow_average[1]) {
+						changeHeading_amount = changeHeading_OF_sideClose;
+					} else {
+						changeHeading_amount = -changeHeading_OF_sideClose;
+					}
+
+				} else if (abs(flow_average[3] - flow_average[0]) > sideFar_threshold) {
+					SIDE_OBSTACLE = TRUE;
+					if (flow_average[3] > flow_average[0]) {
+						changeHeading_amount = changeHeading_OF_sideFar;
+					} else {
+						changeHeading_amount = -changeHeading_OF_sideFar;
+					}
+				}
+			}
+
 		}
 	}
 
-   // Prepare variables for the next iteration
-	divergence_b.OLD_5 = divergence_b.OLD_4;
-	divergence_b.OLD_4 = divergence_b.OLD_3;
-	divergence_b.OLD_3 = divergence_b.OLD_2;
-	divergence_b.OLD_2 = divergence_b.OLD_1;
-	divergence_b.OLD_1 = divergence_b.NOW;
+	// Prepare variables for the next iteration
+	turning[0] = turning[1];
+	turning[1] = turning[2];
 
-	turning.OLD_2 = turning.OLD_1;
-	turning.OLD_1 = turning.NOW;
+	counter_RF[0] = counter_RF[1];
+	counter_RF[1] = counter_RF[2];
 
-	featureless.OLD_2 = featureless.OLD_1;
-	featureless.OLD_1 = featureless.NOW;
+	counter_RC[0] = counter_RC[1];
+	counter_RC[1] = counter_RC[2];
 
-	featureless_right.OLD_2 = featureless_right.OLD_1;
-	featureless_right.OLD_1 = featureless_right.NOW;
+	counter_LF[0] = counter_LF[1];
+	counter_LF[1] = counter_LF[2];
 
-	featureless_left.OLD_2 = featureless_left.OLD_1;
-	featureless_left.OLD_1 = featureless_left.NOW;
+	counter_LC[0] = counter_LC[1];
+	counter_LC[1] = counter_LC[2];
 
-	DOWNLINK_SEND_OBJECT_DETECTION(DefaultChannel, DefaultDevice, &TURNING, &FEATURELESS, &FEATURELESS_RIGHT, &FEATURELESS_LEFT, &TURN_RIGHT, &TURN_LEFT, &flag_right, &flag_left);
+//	DOWNLINK_SEND_OBJECT_DETECTION(DefaultChannel, DefaultDevice, &changeHeading_amount);
 
 }
 
@@ -250,29 +249,29 @@ void obstacle_avoider_periodic() {
 
 uint8_t increase_nav_heading(int32_t *heading, int32_t increment)
 {
-  *heading = *heading + increment;
-  // Check if your turn made it go out of bounds...
-  INT32_ANGLE_NORMALIZE(*heading); // HEADING HAS INT32_ANGLE_FRAC....
-  return FALSE;
+	*heading = *heading + increment;
+	// Check if your turn made it go out of bounds...
+	INT32_ANGLE_NORMALIZE(*heading); // HEADING HAS INT32_ANGLE_FRAC....
+	return FALSE;
 }
 
 uint8_t moveWaypointForwards(uint8_t waypoint, float distanceMeters){
-	  struct EnuCoor_i new_coor;
-	  struct EnuCoor_i *pos = stateGetPositionEnu_i(); // Get your current position
+	struct EnuCoor_i new_coor;
+	struct EnuCoor_i *pos = stateGetPositionEnu_i(); // Get your current position
 
-	  // Calculate the sine and cosine of the heading the drone is keeping
-	  float sin_heading = sinf(ANGLE_FLOAT_OF_BFP(nav_heading));
-	  float cos_heading = cosf(ANGLE_FLOAT_OF_BFP(nav_heading));
+	// Calculate the sine and cosine of the heading the drone is keeping
+	float sin_heading = sinf(ANGLE_FLOAT_OF_BFP(nav_heading));
+	float cos_heading = cosf(ANGLE_FLOAT_OF_BFP(nav_heading));
 
-	  // Now determine where to place the waypoint you want to go to
-	  new_coor.x = pos->x + POS_BFP_OF_REAL(sin_heading * (distanceMeters));
-	  new_coor.y = pos->y + POS_BFP_OF_REAL(cos_heading * (distanceMeters));
-	  new_coor.z = pos->z; // Keep the height the same
+	// Now determine where to place the waypoint you want to go to
+	new_coor.x = pos->x + POS_BFP_OF_REAL(sin_heading * (distanceMeters));
+	new_coor.y = pos->y + POS_BFP_OF_REAL(cos_heading * (distanceMeters));
+	new_coor.z = pos->z; // Keep the height the same
 
-	  // Set the waypoint to the calculated position
-	  waypoint_set_xy_i(waypoint, new_coor.x, new_coor.y);
+	// Set the waypoint to the calculated position
+	waypoint_set_xy_i(waypoint, new_coor.x, new_coor.y);
 
-	  return FALSE;
+	return FALSE;
 }
 
 uint8_t chooseRandomIncrementAvoidance(){
@@ -284,5 +283,24 @@ uint8_t chooseRandomIncrementAvoidance(){
 	else{
 		incrementForAvoidance=-350;
 	}
+	return FALSE;
+}
+
+uint8_t changeHeading_Featureless(){
+
+	if (featureless_indicator[0] == 1 && featureless_indicator[1] == 0 && featureless_indicator[2] == 0 && featureless_indicator[3] == 0) {
+		changeHeading_amount = changeHeading_Featureless_Far;
+	} else if ((featureless_indicator[1] == 1 && featureless_indicator[2] == 0 && featureless_indicator[3] == 0) || (featureless_indicator[0] == 1 && featureless_indicator[1] == 0 && featureless_indicator[2] == 1 && featureless_indicator[3] == 0)) {
+		changeHeading_amount = changeHeading_Featureless_Close;
+	} else if ((featureless_indicator[0] == 0 && featureless_indicator[1] == 0 && featureless_indicator[2] == 1) || (featureless_indicator[0] == 0 && featureless_indicator[1] == 1 && featureless_indicator[2] == 0 && featureless_indicator[3] == 1)) {
+		changeHeading_amount = -changeHeading_Featureless_Close;
+	} else if (featureless_indicator[0] == 0 && featureless_indicator[1] == 0 && featureless_indicator[2] == 0 && featureless_indicator[3] == 1) {
+		changeHeading_amount = -changeHeading_Featureless_Far;
+	} else if (featureless_indicator[0] == 1 && featureless_indicator[1] == 0 && featureless_indicator[2] == 0 && featureless_indicator[3] == 1) {
+		changeHeading_amount = 0;
+	} else if (featureless_indicator[1] == 0 && featureless_indicator[2] == 1) {
+		changeHeading_amount = 180;
+	}
+
 	return FALSE;
 }

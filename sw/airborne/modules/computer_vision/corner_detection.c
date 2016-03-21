@@ -61,20 +61,9 @@ struct image_t img_old;
 uint8_t Featureless = FALSE;
 
 // BALANCE
-int counter_right_far;
-int counter_left_far;
-int counter_right_close;
-int counter_left_close;
-
-float flow_right_far;
-float flow_left_far;
-float flow_right_close;
-float flow_left_close;
-
-float med_flow_right_far;
-float med_flow_left_far;
-float med_flow_right_close;
-float med_flow_left_close;
+int feat_counters[4];
+float flows[4];
+float average_flow[4];
 
 void corner_detection_init(void)
 {
@@ -137,65 +126,65 @@ bool_t corner_detection_func(struct image_t* img)
   }
 
   // Determine the number of features and flow in each region (4 REGIONS)
-  counter_right_far   = 0;
-  counter_left_far    = 0;
-  counter_right_close = 0;
-  counter_left_close  = 0;
+  feat_counters[0] = 0;
+  feat_counters[1] = 0;
+  feat_counters[2] = 0;
+  feat_counters[3] = 0;
 
-  flow_right_far   = 0;
-  flow_left_far    = 0;
-  flow_right_close = 0;
-  flow_left_close  = 0;
+  flows[3] = 0;
+  flows[2] = 0;
+  flows[1] = 0;
+  flows[0] = 0;
 
   for (int i = 0; i <feature_cnt ; ++i) {
     if (vectors[i].pos.y < (IMG_HEIGHT / 2) * lk_subpixel_factor) {
       if (vectors[i].pos.x > (3 * IMG_WIDTH / 4) * lk_subpixel_factor) {
-        counter_right_far++;
-        flow_right_far = abs(flow_right_far) + vectors[i].flow_x;
+        feat_counters[3]++;
+        flows[3] = abs(flows[3]) + vectors[i].flow_x;
       } else if (vectors[i].pos.x > (IMG_WIDTH / 2) * lk_subpixel_factor && vectors[i].pos.x < (3 * IMG_WIDTH / 4) * lk_subpixel_factor) {
-        counter_right_close++;
-        flow_right_close = abs(flow_right_close) + vectors[i].flow_x;
+        feat_counters[2]++;
+        flows[2] = abs(flows[2]) + vectors[i].flow_x;
       } else if (vectors[i].pos.x > (IMG_WIDTH / 4) * lk_subpixel_factor && vectors[i].pos.x < (IMG_WIDTH / 2) * lk_subpixel_factor) {
-        counter_left_close++;
-        flow_left_close = abs(flow_left_close) + vectors[i].flow_x;
+        feat_counters[1]++;
+        flows[1] = abs(flows[1]) + vectors[i].flow_x;
       } else if (vectors[i].pos.x < (IMG_WIDTH / 4) * lk_subpixel_factor) {
-        counter_left_far++;
-        flow_left_far = abs(flow_left_far) + vectors[i].flow_x;
+        feat_counters[0]++;
+        flows[0] = abs(flows[0]) + vectors[i].flow_x;
       }
     }
   }
 
   // Medium flow in each region
-  med_flow_right_far   = 0;
-  med_flow_left_far    = 0;
-  med_flow_right_close = 0;
-  med_flow_left_close  = 0;
+  average_flow[3] = 0;
+  average_flow[2] = 0;
+  average_flow[1] = 0;
+  average_flow[0] = 0;
 
-  if (counter_right_far >0) {
-    med_flow_right_far = flow_right_far / counter_right_far;
+  if (feat_counters[3] >0) {
+    average_flow[3] = flows[3] / feat_counters[3];
   } else {
-    med_flow_right_far = 0;
+    average_flow[3] = 0;
   }
 
-  if (counter_right_close >0) {
-    med_flow_right_close = flow_right_close / counter_right_close;
+  if (feat_counters[2] >0) {
+    average_flow[2] = flows[2] / feat_counters[2];
   } else {
-    med_flow_right_close = 0;
+    average_flow[2] = 0;
   }
 
-  if (counter_left_close >0) {
-    med_flow_left_close = flow_left_close / counter_left_close;
+  if (feat_counters[1] >0) {
+    average_flow[1] = flows[1] / feat_counters[1];
   } else {
-    med_flow_left_close = 0;
+    average_flow[1] = 0;
   }
 
-  if (counter_left_far >0) {
-    med_flow_left_far = flow_left_far / counter_left_far;
+  if (feat_counters[0] >0) {
+    average_flow[0] = flows[0] / feat_counters[0];
   } else {
-    med_flow_left_far = 0;
+    average_flow[0] = 0;
   }
 
-  DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &counter_right_far, &counter_right_close, &counter_left_far, &counter_left_close, &med_flow_right_far, &med_flow_right_close, &med_flow_left_far, &med_flow_left_close);
+  DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &feat_counters[3], &feat_counters[2], &feat_counters[1], &feat_counters[0], &average_flow[3], &average_flow[2], &average_flow[0], &average_flow[1]);
 
   // Copy new image to old image
   image_copy(&img_gray, &img_old);

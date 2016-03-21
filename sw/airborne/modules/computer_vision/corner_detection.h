@@ -51,20 +51,8 @@ float yaw_rate;
 extern uint16_t feature_cnt;
 
 // Balance
-extern int counter_right_far;
-extern int counter_left_far;
-extern int counter_right_close;
-extern int counter_left_close;
-
-extern float flow_right_far;
-extern float flow_left_far;
-extern float flow_right_close;
-extern float flow_left_close;
-
-extern float med_flow_right_far;
-extern float med_flow_left_far;
-extern float med_flow_right_close;
-extern float med_flow_left_close;
+extern int feat_counters[4];
+extern float average_flow[4];
 
 // Module functions
 void corner_detection_init(void);
