@@ -44,17 +44,27 @@ extern uint8_t lk_max_iterations;
 extern uint8_t lk_step_threshold;
 extern uint16_t lk_max_points;
 
-// Featureless iteration
-extern uint8_t Featureless;
+// Yaw rate
+float yaw_rate;
 
-// Divergence
-extern float divergence;
+// Feature counter
+extern uint16_t feature_cnt;
 
-// Derotation of the flow
-struct state_t {
-    float phi;                   ///< Roll
-    float theta;                 ///< Pith
-};
+// Balance
+extern int counter_right_far;
+extern int counter_left_far;
+extern int counter_right_close;
+extern int counter_left_close;
+
+extern float flow_right_far;
+extern float flow_left_far;
+extern float flow_right_close;
+extern float flow_left_close;
+
+extern float med_flow_right_far;
+extern float med_flow_left_far;
+extern float med_flow_right_close;
+extern float med_flow_left_close;
 
 // Module functions
 void corner_detection_init(void);

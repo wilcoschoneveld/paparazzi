@@ -48,7 +48,7 @@
     <load name="cv_corners.xml">
     </load>
 
-    <load name="obstacle_avoider.xml"/>
+    <!--<load name="obstacle_avoider.xml"/>-->
  
     <!--<load name="video_rtp_stream.xml">-->
       <!--<define name="VIEWVIDEO_QUALITY_FACTOR" value="80"/>-->

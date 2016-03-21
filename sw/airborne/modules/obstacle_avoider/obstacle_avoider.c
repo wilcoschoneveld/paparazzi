@@ -17,23 +17,55 @@
 #include <time.h>
 #include <stdlib.h>
 #include "subsystems/datalink/telemetry.h"
+#include <math.h>
 
-#define MEMORY 6
+#define MEMORY_DIVERGENCE 6
+#define MEMORY_EXCEPTIONS 3
 
 int32_t incrementForAvoidance;
 
-float vector_diver[MEMORY];
-struct divergence_t diver;
+// Initialize structures
+struct divergence_t divergence_b;
+struct exceptions_t turning;
+struct exceptions_t featureless;
+struct exceptions_t featureless_right;
+struct exceptions_t featureless_left;
 
-float threshold_diver = 0.1;
-float max_diver = 0.6;
-int threshold_obstacle = 4;
+// Initialize vectors
+float vector_divergence_b[MEMORY_DIVERGENCE];
+float vector_turning[MEMORY_EXCEPTIONS];
+float vector_featureless[MEMORY_EXCEPTIONS];
+float vector_featureless_right[MEMORY_EXCEPTIONS];
+float vector_featureless_left[MEMORY_EXCEPTIONS];
 
-int counter_diver;
+// Counter
+int counter;
 
-// Object detection
-uint8_t Object = FALSE;
+// Check if the aircraft is turning
+float threshold_turning = 0.2;
+uint8_t TURNING = FALSE;
 
+// Featureless object in the front
+int threshold_featureless = 5;
+uint8_t FEATURELESS = FALSE;
+
+// Featureless object in the right
+int threshold_featureless_sides = 3;
+uint8_t FEATURELESS_RIGHT = FALSE;
+uint8_t FEATURELESS_LEFT  = FALSE;
+
+// Turn
+uint8_t TURN_RIGHT = FALSE;
+uint8_t TURN_LEFT  = FALSE;
+int flag_right = 0;
+int flag_left  = 0;
+
+// Check whether there is an obstacle
+int counter_positive;
+int counter_negative;
+float min_threshold = 1;
+float max_threshold = 5;
+int obstacle_threshold = 3;
 
 void obstacle_avoider_init() {
 
@@ -41,51 +73,171 @@ void obstacle_avoider_init() {
 	srand(time(NULL));
 	chooseRandomIncrementAvoidance();
 
-	// Initialize the variables related with obstacle detection.
-	diver.OLD_5 = 0;
-	diver.OLD_4 = 0;
-	diver.OLD_3 = 0;
-	diver.OLD_2 = 0;
-	diver.OLD_1 = 0;
-	diver.NOW   = 0;
+	// Initialize the variables related with the balance of lateral optical flow.
+	divergence_b.OLD_5 = 0;
+	divergence_b.OLD_4 = 0;
+	divergence_b.OLD_3 = 0;
+	divergence_b.OLD_2 = 0;
+	divergence_b.OLD_1 = 0;
+	divergence_b.NOW   = 0;
+
+	// Initialize the variables related with turning
+	turning.OLD_2 = 0;
+	turning.OLD_1 = 0;
+	turning.NOW   = 0;
+
+	// Initialize the variables related with featureless objects
+	featureless.OLD_2 = 0;
+	featureless.OLD_1 = 0;
+	featureless.NOW   = 0;
+
+	featureless_right.OLD_2 = 0;
+	featureless_right.OLD_1 = 0;
+	featureless_right.NOW   = 0;
+
+	featureless_left.OLD_2 = 0;
+	featureless_left.OLD_1 = 0;
+	featureless_left.NOW   = 0;
 
 }
 
 void obstacle_avoider_periodic() {
 
-	// Update current value of divergence
-	diver.NOW   = divergence;
+	// Update current values
+	divergence_b.NOW      = divergence;
+	turning.NOW           = yaw_rate;
+	featureless.NOW       = feature_cnt;
+	featureless_right.NOW = counter_right;
+	featureless_left.NOW  = counter_left;
 
-	// Update the vector
-	vector_diver[0] = diver.OLD_5;
-	vector_diver[1] = diver.OLD_4;
-	vector_diver[2] = diver.OLD_3;
-	vector_diver[3] = diver.OLD_2;
-	vector_diver[4] = diver.OLD_1;
-	vector_diver[5] = diver.NOW;
+	// Update vectors
+	vector_divergence_b[0] = divergence_b.OLD_5;
+	vector_divergence_b[1] = divergence_b.OLD_4;
+	vector_divergence_b[2] = divergence_b.OLD_3;
+	vector_divergence_b[3] = divergence_b.OLD_2;
+	vector_divergence_b[4] = divergence_b.OLD_1;
+	vector_divergence_b[5] = divergence_b.NOW;
 
-	// Check the number of positives above the threshold
-	counter_diver = 0;
-	for (int i = 0; i <MEMORY ; ++i) {
-		if (vector_diver[i] > threshold_diver && vector_diver[i] < max_diver) {
-			counter_diver++;
+	vector_turning[0] = turning.OLD_2;
+	vector_turning[1] = turning.OLD_1;
+	vector_turning[2] = turning.NOW;
+
+	vector_featureless[0] = featureless.OLD_2;
+	vector_featureless[1] = featureless.OLD_1;
+	vector_featureless[2] = featureless.NOW;
+
+	vector_featureless_right[0] = featureless_right.OLD_2;
+	vector_featureless_right[1] = featureless_right.OLD_1;
+	vector_featureless_right[2] = featureless_right.NOW;
+
+	vector_featureless_left[0] = featureless_left.OLD_2;
+	vector_featureless_left[1] = featureless_left.OLD_1;
+	vector_featureless_left[2] = featureless_left.NOW;
+
+	// Check turning
+	counter = 0;
+	for (int i = 0; i <MEMORY_EXCEPTIONS ; ++i) {
+		if (abs(vector_turning[i]) > threshold_turning) {
+			counter++;
 		}
 	}
 
-	// Check if we are facing an obstacle
-	Object = FALSE;
-	if (counter_diver >= threshold_obstacle) {
-		Object = TRUE;
+	TURNING = FALSE;
+	if (counter > 0) {
+		TURNING = TRUE;
+	}
+
+	// Check frontal featureless
+	counter = 0;
+	for (int i = 0; i <MEMORY_EXCEPTIONS ; ++i) {
+		if (vector_featureless[i] < threshold_featureless) {
+			counter++;
+		}
+	}
+
+	FEATURELESS = FALSE;
+	if (counter == MEMORY_EXCEPTIONS) {
+		FEATURELESS = TRUE;
+	}
+
+	// Check lateral featureless
+	counter = 0;
+	for (int i = 0; i <MEMORY_EXCEPTIONS ; ++i) {
+		if (vector_featureless_right[i] < threshold_featureless_sides) {
+			counter++;
+		}
+	}
+
+	FEATURELESS_RIGHT = FALSE;
+	if (counter == MEMORY_EXCEPTIONS) {
+		FEATURELESS_RIGHT = TRUE;
+	}
+
+	counter = 0;
+	for (int i = 0; i <MEMORY_EXCEPTIONS ; ++i) {
+		if (vector_featureless_left[i] < threshold_featureless_sides) {
+			counter++;
+		}
+	}
+
+	FEATURELESS_LEFT = FALSE;
+	if (counter == MEMORY_EXCEPTIONS) {
+		FEATURELESS_LEFT = TRUE;
+	}
+
+	// Turn right or turn left
+	TURN_RIGHT = FALSE;
+	TURN_LEFT  = FALSE;
+	flag_right = 0;
+	flag_left  = 0;
+	if (FEATURELESS_LEFT && !FEATURELESS_RIGHT) {
+		TURN_RIGHT = TRUE;
+		flag_right = 1;
+	} else if (!FEATURELESS_LEFT && FEATURELESS_RIGHT) {
+		TURN_LEFT = TRUE;
+		flag_left  = 1;
+	}
+
+	// If none of the previous conditions is met, then check if there's a lateral obstacle
+	if (!TURNING && !FEATURELESS && !TURN_RIGHT && !TURN_LEFT) {
+		counter_positive = 0;
+		counter_negative = 0;
+		for (int i = 0; i <MEMORY_DIVERGENCE ; ++i) {
+			if (vector_divergence_b[i] > min_threshold && vector_divergence_b[i] < max_threshold) {
+				counter_positive++;
+			} else if (vector_divergence_b[i] < -min_threshold && vector_divergence_b[i] > -max_threshold) {
+				counter_negative++;
+			}
+		}
+		if (counter_positive >= obstacle_threshold) {
+			TURN_LEFT = TRUE;
+			flag_left  = 1;
+		} else if (counter_negative >= obstacle_threshold) {
+			TURN_RIGHT = TRUE;
+			flag_right = 1;
+		}
 	}
 
    // Prepare variables for the next iteration
-	diver.OLD_5 = diver.OLD_4;
-	diver.OLD_4 = diver.OLD_3;
-	diver.OLD_3 = diver.OLD_2;
-	diver.OLD_2 = diver.OLD_1;
-	diver.OLD_1 = diver.NOW;
+	divergence_b.OLD_5 = divergence_b.OLD_4;
+	divergence_b.OLD_4 = divergence_b.OLD_3;
+	divergence_b.OLD_3 = divergence_b.OLD_2;
+	divergence_b.OLD_2 = divergence_b.OLD_1;
+	divergence_b.OLD_1 = divergence_b.NOW;
 
-	DOWNLINK_SEND_OBJECT_DETECTION(DefaultChannel, DefaultDevice, &counter_diver);
+	turning.OLD_2 = turning.OLD_1;
+	turning.OLD_1 = turning.NOW;
+
+	featureless.OLD_2 = featureless.OLD_1;
+	featureless.OLD_1 = featureless.NOW;
+
+	featureless_right.OLD_2 = featureless_right.OLD_1;
+	featureless_right.OLD_1 = featureless_right.NOW;
+
+	featureless_left.OLD_2 = featureless_left.OLD_1;
+	featureless_left.OLD_1 = featureless_left.NOW;
+
+	DOWNLINK_SEND_OBJECT_DETECTION(DefaultChannel, DefaultDevice, &TURNING, &FEATURELESS, &FEATURELESS_RIGHT, &FEATURELESS_LEFT, &TURN_RIGHT, &TURN_LEFT, &flag_right, &flag_left);
 
 }
 

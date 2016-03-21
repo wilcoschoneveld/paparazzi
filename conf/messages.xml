@@ -864,10 +864,21 @@
   </message>
 
   <message name="OPTICAL_FLOW" id="108">
-    <field name="feature_cnt" type="uint16" />
-    <field name="divergence" type="float" />
-    <field name="threshold" type="uint8" />
-    <!--<field name="orange" type="int32" />-->
+    <!--<field name="feature_cnt" type="uint16" />-->
+    <!--<field name="feature_cnt_right" type="int32" />-->
+    <!--<field name="feature_cnt_left" type="int32" />-->
+    <!--<field name="divergence_right" type="float" />-->
+    <!--<field name="divergence_left" type="float" />-->
+    <!--<field name="divergence_balance" type="float" />-->
+    <!--<field name="yaw_rate" type="float" />-->
+    <field name="counter_right_far" type="int32" />
+    <field name="counter_right_close" type="int32" />
+    <field name="counter_left_far" type="int32" />
+    <field name="counter_left_close" type="int32" />
+    <field name="med_flow_right_far" type="float" />
+    <field name="med_flow_right_close" type="float" />
+    <field name="med_flow_left_far" type="float" />
+    <field name="med_flow_left_close" type="float" />
   </message>
 
   <message name="MULTIGAZE_METERS" id="109">
@@ -896,7 +907,14 @@
   </message>
 
    <message name="OBJECT_DETECTION" id="112">
-     <field name="counter_diver" type="int32" />
+     <field name="TURNING" type="uint8" />
+     <field name="FEATURELESS" type="uint8" />
+     <field name="FEATURELESS_RIGHT" type="uint8" />
+     <field name="FEATURELESS_LEFT" type="uint8" />
+     <field name="TURN_RIGHT" type="uint8" />
+     <field name="TURN_LEFT" type="uint8" />
+     <field name="flag_right" type="int32" />
+     <field name="flag_left" type="int32" />
    </message>
 
   <message name="MLX_SERIAL" id="113">

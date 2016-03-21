@@ -31,6 +31,13 @@ struct divergence_t {
     float NOW;
 };
 
+// Divergence condition
+struct exceptions_t {
+    float OLD_2;
+    float OLD_1;
+    float NOW;
+};
+
 // Object detection
 extern uint8_t Object;
 

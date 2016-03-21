@@ -57,7 +57,7 @@
 
   <!-- Global exceptions -->
   <exceptions>
-    <exception cond="!InsideCyberZoo(GetPosX(), GetPosY())" deroute="Hover"/>
+    <!--<exception cond="!InsideCyberZoo(GetPosX(), GetPosY())" deroute="Hover"/>-->
     <!--<exception cond="datalink_time > 2" deroute="Standby"/>-->
     <!--<exception cond="electrical.bat_low && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Flare')) && !(nav_block == IndexOfBlock('Landed'))" deroute="Land"/>-->
     <!--<exception cond="electrical.bat_critical && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Flare')) && !(nav_block == IndexOfBlock('Landed'))" deroute="Land here"/>-->
@@ -65,11 +65,11 @@
 
   <!-- Blocks describing the units of the mission -->
   <blocks>
-    <!-- Kill the throttle and wait for GPS fix -->
-    <block name="Wait GPS">
-      <call fun="NavKillThrottle()"/>
-      <while cond="!GpsFixValid()"/>
-    </block>
+    <!--&lt;!&ndash; Kill the throttle and wait for GPS fix &ndash;&gt;-->
+    <!--<block name="Wait GPS">-->
+    <!--<call fun="NavKillThrottle()"/>-->
+    <!--<while cond="!GpsFixValid()"/>-->
+    <!--</block>-->
 
     <!-- Wait 5 seconds and then set altitude reference -->
     <block name="Geo init">
@@ -89,95 +89,97 @@
       <attitude pitch="0" roll="0" throttle="0" vmode="throttle"/>
     </block>
 
-    <!-- Hover at the current location -->
-    <block key="h" name="Hover" strip_button="Hover" strip_icon="flat_theme/takeoff.png">
+    <!-- Take off -->
+    <block key="t" name="Takeoff" strip_button="Takeoff" strip_icon="takeoff.png">
+      <exception cond="stateGetPositionEnu_f()->z > 1.25" deroute="Standby"/>
+      <call fun="NavSetWaypointHere(WP_CLIMB)"/>
+      <stay climb="nav_climb_vspeed" vmode="climb" wp="CLIMB"/>
+    </block>
+
+    <!-- Set waypoint STDBY here and stay there -->
+    <block key="s" name="Standby" strip_button="Standby" strip_icon="home.png">
       <call fun="NavSetWaypointHere(WP_STDBY)"/>
       <stay wp="STDBY"/>
     </block>
 
-    <block name="B">
-      <call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>
-      <go wp="GOAL"/>
-    </block>
-
-    <block name="A">
-      <stay wp="STDBY"/>
-    </block>
-
-    <!-- Move forwards -->
-    <block name="Go" strip_button="Go" strip_icon="flat_theme/right.png">
-      <exception cond="!InsideObstacleZone(GetPosX(),GetPosY())" deroute="Return"/>
+    <block key="g" name="START" strip_button="Go" strip_icon="lookfore.png">
       <call fun="NavSetWaypointHere(WP_GOAL)"/>
-      <while cond="TRUE">
-        <call fun="moveWaypointForwards(WP_GOAL, 1.0)"/>
-        <go wp="GOAL"/>
-      </while>
     </block>
 
-    <block name="Return">
-      <call fun="nav_set_heading_towards_waypoint(WP_HOME)"/>
-      <stay wp="HOME"/>
-    </block>
-
-    <!--<block key="t" name="Takeoff" strip_button="Takeoff" strip_icon="takeoff.png">-->
-      <!--<exception cond="stateGetPositionEnu_f()->z > 1.25" deroute="Standby"/>-->
-      <!--<call fun="NavSetWaypointHere(WP_CLIMB)"/>-->
-      <!--<stay climb="nav_climb_vspeed" vmode="climb" wp="CLIMB"/>-->
-    <!--</block>-->
-
-    <!--<block key="s" name="Standby" strip_button="Standby" strip_icon="home.png">-->
-      <!--<call fun="NavSetWaypointHere(WP_STDBY)"/>-->
-      <!--<stay wp="STDBY"/>-->
-    <!--</block>-->
-
-    <!--<block key="g" name="START" strip_button="Go" strip_icon="lookfore.png">-->
-      <!--<call fun="NavSetWaypointHere(WP_GOAL)"/>-->
-    <!--</block>-->
-    <!--<block name="StayGoal">-->
-      <!--<go wp="GOAL"/>-->
-      <!--<exception cond="block_time > 1" deroute="MoveGoalForward"/>-->
+    <block name="StayGoal">
+      <stay wp="GOAL"/>
+      <exception cond="block_time > 5" deroute="MoveGoalForward"/>
       <!--<exception cond="!safeToGoForwards" deroute="ChangeHeading"/>-->
       <!--<exception cond="!InsideObstacleZone(GetPosX(),GetPosY())" deroute="PrepareObstacleRun"/>-->
-    <!--</block>-->
-    <!--<block name="MoveGoalForward">-->
-      <!--<call fun="moveWaypointForwards(WP_GOAL,3.0)"/>-->
-      <!--<deroute block="StayGoal"/>-->
-      <!--<exception cond="!safeToGoForwards" deroute="ChangeHeading"/>-->
-      <!--<exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="PrepareObstacleRun"/>-->
-    <!--</block>-->
-    <block name="ChangeHeading">
-      <call fun="NavSetWaypointHere(WP_STDBY)"/>
-      <while cond="1">
-        <call fun="increase_nav_heading(&nav_heading, incrementForAvoidance)"/>
-        <call fun="moveWaypointForwards(WP_GOAL,3.0)"/>
-        <go wp="STDBY"/>
-      </while>
-      <exception cond="safeToGoForwards" deroute="StayGoal"/>
     </block>
+
+    <!-- ////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+    <block name="MoveGoalForward">
+      <call fun="moveWaypointForwards(WP_GOAL,1)"/>
+      <deroute block="GoGoal"/>
+      <!--<exception cond="!safeToGoForwards" deroute="ChangeHeading"/>-->
+      <!--<exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="ChangeHeading"/>-->
+    </block>
+
+    <block name="GoGoal">
+      <stay wp="GOAL"/>
+      <attitude pitch="-1" roll="0" alt="1.5"/>
+      <!--<exception cond="block_time > 10" deroute="MoveGoalForward"/>-->
+      <!--<exception cond="!safeToGoForwards" deroute="ChangeHeading"/>-->
+      <!--<exception cond="!InsideObstacleZone(GetPosX(),GetPosY())" deroute="PrepareObstacleRun"/>-->
+    </block>
+
+    <!--<block name="ChangeHeading">-->
+      <!--<while cond="1">-->
+        <!--<call fun="increase_nav_heading(&nav_heading, 25)"/>-->
+        <!--<call fun="moveWaypointForwards(WP_GOAL,0.5)"/>-->
+      <!--</while>-->
+      <!--<exception cond="InsideObstacleZone(GetPosX(),GetPosY())" deroute="GoGoal"/>-->
+    <!--</block>-->
+
     <!--<block name="PrepareObstacleRun">-->
       <!--<call fun="NavSetWaypointHere(WP_STDBY)"/>-->
       <!--<call fun="nav_set_heading_towards_waypoint(WP_HOME)"/>-->
       <!--<stay wp="STDBY"/>-->
       <!--<exception cond="block_time > 1" deroute="GetOutOfObstacleZone"/>-->
     <!--</block>-->
+
     <!--<block name="GetOutOfObstacleZone">-->
       <!--<call fun="moveWaypointForwards(WP_GOAL,0.5)"/>-->
       <!--<call fun="chooseRandomIncrementAvoidance()"/>-->
       <!--<stay wp="GOAL"/>-->
       <!--<exception cond="block_time > 1" deroute="START"/>-->
     <!--</block>-->
+
+
+    <!-- ////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+    <!--&lt;!&ndash; Hover at the current location &ndash;&gt;-->
+    <!--<block key="h" name="Hover" strip_button="Hover" strip_icon="flat_theme/takeoff.png">-->
+      <!--<call fun="NavSetWaypointHere(WP_STDBY)"/>-->
+      <!--<stay wp="STDBY"/>-->
+    <!--</block>-->
+
+    <!-- Set the waypoint TD here -->
     <block key="l" name="Land here" strip_button="Land Here" strip_icon="land-right.png">
       <call fun="NavSetWaypointHere(WP_TD)"/>
     </block>
+
+    <!-- Go to waypoint TD -->
     <block name="Land">
       <go wp="TD"/>
     </block>
+
+    <!-- Reduce altitude until touchdown -->
     <block name="Flare">
       <exception cond="NavDetectGround()" deroute="Holding point"/>
       <exception cond="!nav_is_in_flight()" deroute="Landed"/>
       <call fun="NavStartDetectGround()"/>
       <stay climb="nav_descend_vspeed" vmode="climb" wp="TD"/>
     </block>
+
+    <!-- Kill throtle -->
     <block name="Landed">
       <call fun="NavKillThrottle()"/>
       <attitude pitch="0" roll="0" throttle="0" until="FALSE" vmode="throttle"/>

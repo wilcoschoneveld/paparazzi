@@ -137,7 +137,6 @@
       <exception cond="InsideObstacleZone(GetPosX(),GetPosY())" deroute="Reinitialize_Divergence"/>
     </block>
 
-
     <block name="ChangeHeading">
       <call fun="NavSetWaypointHere(WP_STDBY)"/>
       <while cond="1">
@@ -150,7 +149,7 @@
 
     <block name="Reinitialize_Divergence">
       <stay wp="GOAL"/>
-      <exception cond="block_time>2" deroute="GoGoal"/>
+      <exception cond="block_time>2" deroute="MoveGoalForward"/>
     </block>
 
     <!-- ////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
