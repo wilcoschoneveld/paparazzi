@@ -107,6 +107,10 @@ bool_t corner_detection_func(struct image_t* img)
           lk_step_threshold,
           lk_max_points);
 
+  // Show optical flow on original image
+  if (lk_show_optical_flow)
+    image_show_flow(img, vectors, feature_cnt, lk_subpixel_factor);
+
   // Narrow the vertical window and only horizontal derotated flow
   yaw_rate = stateGetBodyRates_f()->r;
 
@@ -118,7 +122,7 @@ bool_t corner_detection_func(struct image_t* img)
   }
 
   // Loop over all flow features
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < feature_cnt; ++i) {
     // Obtain image coordinates
     int x = vectors[i].pos.x / lk_subpixel_factor;
     int y = vectors[i].pos.y / lk_subpixel_factor;

@@ -864,21 +864,14 @@
   </message>
 
   <message name="OPTICAL_FLOW" id="108">
-    <!--<field name="feature_cnt" type="uint16" />-->
-    <!--<field name="feature_cnt_right" type="int32" />-->
-    <!--<field name="feature_cnt_left" type="int32" />-->
-    <!--<field name="divergence_right" type="float" />-->
-    <!--<field name="divergence_left" type="float" />-->
-    <!--<field name="divergence_balance" type="float" />-->
-    <!--<field name="yaw_rate" type="float" />-->
     <field name="counter_right_far" type="int32" />
     <field name="counter_right_close" type="int32" />
-    <field name="counter_left_far" type="int32" />
     <field name="counter_left_close" type="int32" />
+    <field name="counter_left_far" type="int32" />
     <field name="med_flow_right_far" type="float" />
     <field name="med_flow_right_close" type="float" />
-    <field name="med_flow_left_far" type="float" />
     <field name="med_flow_left_close" type="float" />
+    <field name="med_flow_left_far" type="float" />
   </message>
 
   <message name="MULTIGAZE_METERS" id="109">
