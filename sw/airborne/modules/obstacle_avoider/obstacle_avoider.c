@@ -122,14 +122,14 @@ void obstacle_avoider_periodic() {
 
 	// Update current values
 	turning[2]    = yaw_rate;
-	counter_RF[2] = feat_counters[3];
-	counter_RC[2] = feat_counters[2];
-	counter_LC[2] = feat_counters[1];
-	counter_LF[2] = feat_counters[0];
-	average_flow_RF[2] = average_flow[3];
-	average_flow_RC[2] = average_flow[2];
-	average_flow_LC[2] = average_flow[1];
-	average_flow_LF[2] = average_flow[0];
+	counter_RF[2] = regions[3].counter;
+	counter_RC[2] = regions[2].counter;
+	counter_LC[2] = regions[1].counter;
+	counter_LF[2] = regions[0].counter;
+	average_flow_RF[2] = regions[3].average;
+	average_flow_RC[2] = regions[2].average;
+	average_flow_LC[2] = regions[1].average;
+	average_flow_LF[2] = regions[0].average;
 
 	// Check turning
 	counter_turning = 0;

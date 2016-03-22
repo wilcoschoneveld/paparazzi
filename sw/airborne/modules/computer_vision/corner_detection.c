@@ -57,13 +57,8 @@ uint16_t lk_max_points       = 50;
 struct image_t img_gray;
 struct image_t img_old;
 
-// FEATURELESS ITERATION
-uint8_t Featureless = FALSE;
-
 // BALANCE
-int feat_counters[4];
-float flows[4];
-float average_flow[4];
+struct flow regions[4];
 
 void corner_detection_init(void)
 {
@@ -115,76 +110,50 @@ bool_t corner_detection_func(struct image_t* img)
   // Narrow the vertical window and only horizontal derotated flow
   yaw_rate = stateGetBodyRates_f()->r;
 
-  for (int i = 0; i <feature_cnt ; ++i) {
-    if (vectors[i].pos.y > (IMG_HEIGHT / 2) * lk_subpixel_factor) {
-      vectors[i].flow_x = 0;
-      vectors[i].flow_y = 0;
-    } else {
-      vectors[i].flow_x = vectors[i].flow_x + ((IMG_HEIGHT/2) - (vectors[i].pos.y/lk_subpixel_factor)) * yaw_rate;
-      vectors[i].flow_y = 0;
-    }
+  // Initialize regions
+  for (int i = 0; i < 4; ++i) {
+    regions[i].counter = 0;
+    regions[i].total = 0;
+    regions[i].average = 0;
   }
 
-  // Determine the number of features and flow in each region (4 REGIONS)
-  feat_counters[0] = 0;
-  feat_counters[1] = 0;
-  feat_counters[2] = 0;
-  feat_counters[3] = 0;
+  // Loop over all flow features
+  for (int i = 0; i < 4; ++i) {
+    // Obtain image coordinates
+    int x = vectors[i].pos.x / lk_subpixel_factor;
+    int y = vectors[i].pos.y / lk_subpixel_factor;
 
-  flows[3] = 0;
-  flows[2] = 0;
-  flows[1] = 0;
-  flows[0] = 0;
+    // Ignore any flow feature below a certain horizontal
+    if (y > IMG_HEIGHT / 2)
+      continue;
 
-  for (int i = 0; i <feature_cnt ; ++i) {
-    if (vectors[i].pos.y < (IMG_HEIGHT / 2) * lk_subpixel_factor) {
-      if (vectors[i].pos.x > (3 * IMG_WIDTH / 4) * lk_subpixel_factor) {
-        feat_counters[3]++;
-        flows[3] = abs(flows[3]) + vectors[i].flow_x;
-      } else if (vectors[i].pos.x > (IMG_WIDTH / 2) * lk_subpixel_factor && vectors[i].pos.x < (3 * IMG_WIDTH / 4) * lk_subpixel_factor) {
-        feat_counters[2]++;
-        flows[2] = abs(flows[2]) + vectors[i].flow_x;
-      } else if (vectors[i].pos.x > (IMG_WIDTH / 4) * lk_subpixel_factor && vectors[i].pos.x < (IMG_WIDTH / 2) * lk_subpixel_factor) {
-        feat_counters[1]++;
-        flows[1] = abs(flows[1]) + vectors[i].flow_x;
-      } else if (vectors[i].pos.x < (IMG_WIDTH / 4) * lk_subpixel_factor) {
-        feat_counters[0]++;
-        flows[0] = abs(flows[0]) + vectors[i].flow_x;
-      }
-    }
+    // De-rotate flow
+    vectors[i].flow_x -= (y - IMG_HEIGHT / 2) * yaw_rate;
+
+    // Determine region
+    int k = x * 4 / IMG_WIDTH;
+
+    regions[k].counter++;
+    regions[k].total += abs(vectors[i].flow_x); // Not to sure about this??
   }
 
-  // Medium flow in each region
-  average_flow[3] = 0;
-  average_flow[2] = 0;
-  average_flow[1] = 0;
-  average_flow[0] = 0;
-
-  if (feat_counters[3] >0) {
-    average_flow[3] = flows[3] / feat_counters[3];
-  } else {
-    average_flow[3] = 0;
+  // Calculate average of flow regions
+  for (int i = 0; i < 4; ++i) {
+    // If region counter is greater than zero, calculate average
+    if (regions[i].counter > 0)
+      regions[i].average = regions[i].total / regions[i].counter;
   }
 
-  if (feat_counters[2] >0) {
-    average_flow[2] = flows[2] / feat_counters[2];
-  } else {
-    average_flow[2] = 0;
-  }
-
-  if (feat_counters[1] >0) {
-    average_flow[1] = flows[1] / feat_counters[1];
-  } else {
-    average_flow[1] = 0;
-  }
-
-  if (feat_counters[0] >0) {
-    average_flow[0] = flows[0] / feat_counters[0];
-  } else {
-    average_flow[0] = 0;
-  }
-
-  DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel, DefaultDevice, &feat_counters[3], &feat_counters[2], &feat_counters[1], &feat_counters[0], &average_flow[3], &average_flow[2], &average_flow[0], &average_flow[1]);
+  DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel,
+                             DefaultDevice,
+                             &regions[3].counter,
+                             &regions[2].counter,
+                             &regions[1].counter,
+                             &regions[0].counter,
+                             &regions[3].average,
+                             &regions[2].average,
+                             &regions[1].average,
+                             &regions[0].average);
 
   // Copy new image to old image
   image_copy(&img_gray, &img_old);

@@ -30,6 +30,13 @@
 
 #include "modules/computer_vision/cv.h"
 
+
+struct flow {
+    int counter;
+    float total;
+    float average;
+};
+
 // Module settings
 extern bool_t fast_show_features;
 extern uint8_t fast_threshold;
@@ -51,8 +58,7 @@ float yaw_rate;
 extern uint16_t feature_cnt;
 
 // Balance
-extern int feat_counters[4];
-extern float average_flow[4];
+extern struct flow regions[4];
 
 // Module functions
 void corner_detection_init(void);
