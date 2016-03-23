@@ -34,9 +34,9 @@
 
     <!-- Corners of the obstacle zone -->
     <waypoint lat="51.9905922" lon="4.3767779" name="_OZ1"/>
-    <waypoint lat="51.9906271" lon="4.3768621" name="_OZ2"/>
+    <waypoint lat="51.9906428" lon="4.3767195" name="_OZ2"/>
     <waypoint lat="51.9906780" lon="4.3768044" name="_OZ3"/>
-    <waypoint lat="51.9906428" lon="4.3767195" name="_OZ4"/>
+    <waypoint lat="51.9906271" lon="4.3768621" name="_OZ4"/>
   </waypoints>
 
   <!-- Sectors used in this flight plan -->

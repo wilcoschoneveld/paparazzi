@@ -21,16 +21,14 @@
   <waypoints>
     <!-- Mission waypoints -->
     <waypoint name="HOME" x="0.0" y="0.0"/>
-    <waypoint name="CLIMB" x="1.2" y="-0.6"/>
-    <waypoint name="GOAL" x="2.0" y="2.0"/>
     <waypoint name="STDBY" x="-0.7" y="-0.8"/>
-    <waypoint name="TD" x="0.8" y="-1.7"/>
+    <waypoint name="GOAL" x="2.0" y="2.0"/>
 
     <!-- Corners of the obstacle zone -->
     <waypoint lat="51.9905922" lon="4.3767779" name="_OZ1"/>
-    <waypoint lat="51.9906271" lon="4.3768621" name="_OZ2"/>
+    <waypoint lat="51.9906428" lon="4.3767195" name="_OZ2"/>
     <waypoint lat="51.9906780" lon="4.3768044" name="_OZ3"/>
-    <waypoint lat="51.9906428" lon="4.3767195" name="_OZ4"/>
+    <waypoint lat="51.9906271" lon="4.3768621" name="_OZ4"/>
   </waypoints>
 
   <!-- Sectors used in this flight plan -->
@@ -81,6 +79,26 @@
       <call fun="NavSetWaypointHere(WP_STDBY)"/>
       <stay wp="STDBY"/>
     </block>
+
+    <!-- ################################### -->
+    <!-- ### OBSTACLE AVOIDANCE STRATEGY ### -->
+    <!-- ################################### -->
+
+    <block name="Start">
+      <call fun="NavSetWaypointHere(WP_GOAL)"/>
+    </block>
+
+    <block name="MoveGoalForward">
+      <call fun="moveWaypointForwards(WP_GOAL, 1.25)"/>
+    </block>
+
+    <block name="GoGoal">
+      <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="Hover"/>
+      <go wp="GOAL"/>
+      <deroute block="MoveGoalForward"/>
+    </block>
+
+    <!-- ################################### -->
 
     <!-- Land at the current location -->
     <block key="l" name="Land" strip_button="Land" strip_icon="flat_theme/downdown.png">
