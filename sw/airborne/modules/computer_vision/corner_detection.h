@@ -52,7 +52,7 @@ extern uint8_t lk_step_threshold;
 extern uint16_t lk_max_points;
 
 // Yaw rate
-float yaw_rate;
+extern float yaw_rate;
 
 // Feature counter
 extern uint16_t feature_cnt;

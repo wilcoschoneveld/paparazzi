@@ -57,6 +57,9 @@ uint16_t lk_max_points       = 50;
 struct image_t img_gray;
 struct image_t img_old;
 
+// Rates
+float yaw_rate;
+
 // BALANCE
 struct flow regions[4];
 

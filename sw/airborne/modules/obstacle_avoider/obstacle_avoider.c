@@ -48,8 +48,8 @@ uint8_t TURNING = FALSE;
 // SECOND CONDITION: Check featureless regions
 float counter_average[4];
 
-int threshold_feature_far = 2;
-int threshold_feature_close = 2;
+int threshold_feature_far = 1;
+int threshold_feature_close = 1;
 
 uint8_t FEATURELESS = FALSE;
 int featureless_indicator[4];
@@ -60,7 +60,8 @@ float changeHeading_Featureless_Close = 90;
 // THIRD CONDITION: Check frontal obstacle
 float flow_average[4];
 
-float frontal_threshold = 50;
+float frontal_threshold_min = 3;
+float frontal_threshold_max = 150;
 float changeHeading_OF_Frontal = 180;
 float changeHeading_OF_Lateral = 90;
 uint8_t FRONTAL_OBSTACLE = FALSE;
@@ -68,11 +69,9 @@ uint8_t FRONTAL_OBSTACLE = FALSE;
 // FOURTH CONDITION: Check side obstacles
 float sideClose_threshold = 50;
 float sideFar_threshold   = 50;
-float changeHeading_OF_sideClose = 30;
-float changeHeading_OF_sideFar   = 60;
+float changeHeading_OF_sideClose = 60;
+float changeHeading_OF_sideFar   = 30;
 uint8_t SIDE_OBSTACLE = FALSE;
-
-
 
 void obstacle_avoider_init() {
 
@@ -119,6 +118,10 @@ void obstacle_avoider_periodic() {
 	FRONTAL_OBSTACLE = FALSE;
 	SIDE_OBSTACLE = FALSE;
 	changeHeading_amount = 0;
+	featureless_indicator[0] = 0;
+	featureless_indicator[1] = 0;
+	featureless_indicator[2] = 0;
+	featureless_indicator[3] = 0;
 
 	// Update current values
 	turning[2]    = yaw_rate;
@@ -149,12 +152,12 @@ void obstacle_avoider_periodic() {
 		counter_average[2] = (counter_RC[2] + counter_RC[1] + counter_RC[0]) / 3;
 		counter_average[3] = (counter_RF[2] + counter_RF[1] + counter_RF[0]) / 3;
 
-		if (counter_average[0] < threshold_feature_far) {
-			featureless_indicator[0] = 1;
-			FEATURELESS = TRUE;
-		} else {
-			featureless_indicator[0] = 0;
-		}
+//		if (counter_average[0] < threshold_feature_far) {
+//			featureless_indicator[0] = 1;
+//			FEATURELESS = TRUE;
+//		} else {
+//			featureless_indicator[0] = 0;
+//		}
 
 		if (counter_average[1] < threshold_feature_close) {
 			featureless_indicator[1] = 1;
@@ -170,12 +173,12 @@ void obstacle_avoider_periodic() {
 			featureless_indicator[2] = 0;
 		}
 
-		if (counter_average[3] < threshold_feature_far) {
-			featureless_indicator[3] = 1;
-			FEATURELESS = TRUE;
-		} else {
-			featureless_indicator[3] = 0;
-		}
+//		if (counter_average[3] < threshold_feature_far) {
+//			featureless_indicator[3] = 1;
+//			FEATURELESS = TRUE;
+//		} else {
+//			featureless_indicator[3] = 0;
+//		}
 
 		if (!FEATURELESS) {
 			// Check frontal obstacle
@@ -185,13 +188,13 @@ void obstacle_avoider_periodic() {
 			flow_average[3] = (average_flow_RF[2] + average_flow_RF[1] + average_flow_RF[0]) / 3;
 
 
-			if (flow_average[1] > frontal_threshold && flow_average[2] > frontal_threshold) {
+			if (flow_average[1] > frontal_threshold_min && flow_average[1] < frontal_threshold_max && flow_average[2] > frontal_threshold_min && flow_average[2] < frontal_threshold_max) {
 				FRONTAL_OBSTACLE = TRUE;
 				changeHeading_amount = changeHeading_OF_Frontal;
-			} else if (flow_average[1] > frontal_threshold) {
+			} else if (flow_average[1] > frontal_threshold_min && flow_average[1] < frontal_threshold_max) {
 				FRONTAL_OBSTACLE = TRUE;
 				changeHeading_amount = changeHeading_OF_Lateral;
-			} else if (flow_average[2] > frontal_threshold) {
+			} else if (flow_average[2] > frontal_threshold_min && flow_average[2] < frontal_threshold_max) {
 				FRONTAL_OBSTACLE = TRUE;
 				changeHeading_amount = -changeHeading_OF_Lateral;
 			}
@@ -202,17 +205,17 @@ void obstacle_avoider_periodic() {
 				if (abs(flow_average[2] - flow_average[1]) > sideClose_threshold) {
 					SIDE_OBSTACLE = TRUE;
 					if (flow_average[2] > flow_average[1]) {
-						changeHeading_amount = changeHeading_OF_sideClose;
-					} else {
 						changeHeading_amount = -changeHeading_OF_sideClose;
+					} else {
+						changeHeading_amount = changeHeading_OF_sideClose;
 					}
 
 				} else if (abs(flow_average[3] - flow_average[0]) > sideFar_threshold) {
 					SIDE_OBSTACLE = TRUE;
 					if (flow_average[3] > flow_average[0]) {
-						changeHeading_amount = changeHeading_OF_sideFar;
-					} else {
 						changeHeading_amount = -changeHeading_OF_sideFar;
+					} else {
+						changeHeading_amount = changeHeading_OF_sideFar;
 					}
 				}
 			}
@@ -236,7 +239,7 @@ void obstacle_avoider_periodic() {
 	counter_LC[0] = counter_LC[1];
 	counter_LC[1] = counter_LC[2];
 
-//	DOWNLINK_SEND_OBJECT_DETECTION(DefaultChannel, DefaultDevice, &changeHeading_amount);
+	DOWNLINK_SEND_OBJECT_DETECTION(DefaultChannel, DefaultDevice, &TURNING, &FEATURELESS, &FRONTAL_OBSTACLE, &SIDE_OBSTACLE, &flow_average[0], &flow_average[1], &flow_average[2], &flow_average[3]);
 
 }
 
@@ -262,6 +265,28 @@ uint8_t moveWaypointForwards(uint8_t waypoint, float distanceMeters){
 	// Calculate the sine and cosine of the heading the drone is keeping
 	float sin_heading = sinf(ANGLE_FLOAT_OF_BFP(nav_heading));
 	float cos_heading = cosf(ANGLE_FLOAT_OF_BFP(nav_heading));
+
+	// Now determine where to place the waypoint you want to go to
+	new_coor.x = pos->x + POS_BFP_OF_REAL(sin_heading * (distanceMeters));
+	new_coor.y = pos->y + POS_BFP_OF_REAL(cos_heading * (distanceMeters));
+	new_coor.z = pos->z; // Keep the height the same
+
+	// Set the waypoint to the calculated position
+	waypoint_set_xy_i(waypoint, new_coor.x, new_coor.y);
+
+	return FALSE;
+}
+
+uint8_t moveWaypointAngle(uint8_t waypoint, float distanceMeters){
+	struct EnuCoor_i new_coor;
+	struct EnuCoor_i *pos = stateGetPositionEnu_i(); // Get your current position
+
+	// Definition pi
+	float pi = 22/7;
+
+	// Calculate the sine and cosine of the heading the drone is keeping
+	float sin_heading = sinf(ANGLE_FLOAT_OF_BFP(nav_heading) + changeHeading_amount*pi/180);
+	float cos_heading = cosf(ANGLE_FLOAT_OF_BFP(nav_heading) + changeHeading_amount*pi/180);
 
 	// Now determine where to place the waypoint you want to go to
 	new_coor.x = pos->x + POS_BFP_OF_REAL(sin_heading * (distanceMeters));

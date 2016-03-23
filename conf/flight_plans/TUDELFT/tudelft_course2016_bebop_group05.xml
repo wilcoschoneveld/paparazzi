@@ -116,42 +116,55 @@
     <block name="MoveGoalForward">
       <call fun="moveWaypointForwards(WP_GOAL,1)"/>
       <deroute block="GoGoal"/>
-      <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="ChangeHeading_CZ"/>
+      <exception cond="FRONTAL_OBSTACLE >0" deroute="Land here"/>
+      <!--<exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="ChangeHeading_CZ"/>-->
     </block>
 
     <block name="GoGoal">
-      <stay wp="GOAL"/>
-      <attitude pitch="-1" roll="0" alt="1.5"/>
-      <exception cond="Object" deroute="ChangeHeading"/>
-      <exception cond="Featureless" deroute="ChangeHeading"/>
-      <exception cond="block_time>2" deroute="MoveGoalForward"/>
+      <!--<stay wp="GOAL"/>-->
+      <attitude pitch="-4" roll="0" alt="1.5"/>
+      <!--<exception cond="block_time>3" deroute="Land here"/>-->
     </block>
 
-    <block name="ChangeHeading_CZ">
-      <call fun="NavSetWaypointHere(WP_STDBY)"/>
-      <while cond="1">
-        <call fun="increase_nav_heading(&nav_heading,incrementForAvoidance)"/>
-        <call fun="moveWaypointForwards(WP_GOAL,0.5)"/>
-        <go wp="STDBY"/>
-      </while>
-      <exception cond="InsideObstacleZone(GetPosX(),GetPosY())" deroute="Reinitialize_Divergence"/>
+    <block name="StayHere">
+    <call fun="NavSetWaypointHere(WP_STDBY)"/>
+    <stay wp="STDBY"/>
     </block>
 
-    <block name="ChangeHeading">
-      <call fun="NavSetWaypointHere(WP_STDBY)"/>
-      <while cond="1">
-        <call fun="increase_nav_heading(&nav_heading,120)"/>
-        <call fun="moveWaypointForwards(WP_GOAL,0.5)"/>
-        <go wp="STDBY"/>
-      </while>
-      <exception cond="block_time>5" deroute="Reinitialize_Divergence"/>
-    </block>
+    <!--<block name="MoveGoalForward">-->
+      <!--<call fun="moveWaypointForwards(WP_GOAL,1)"/>-->
+      <!--<deroute block="GoGoal"/>-->
+      <!--<exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="ChangeHeading_CZ"/>-->
+    <!--</block>-->
 
-    <block name="Reinitialize_Divergence">
-      <stay wp="GOAL"/>
-      <exception cond="block_time>2" deroute="MoveGoalForward"/>
-    </block>
+    <!--<block name="GoGoal">-->
+      <!--<stay wp="GOAL"/>-->
+      <!--<exception cond="block_time>5" deroute="MoveGoalForward"/>-->
+      <!--<exception cond="FEATURELESS" deroute="Featureless_Angle"/>-->
+      <!--<exception cond="FRONTAL_OBSTACLE" deroute="ChangeHeading_General"/>-->
+      <!--<exception cond="SIDE_OBSTACLE" deroute="ChangeHeading_General"/>-->
+    <!--</block>-->
 
+    <!--<block name="ChangeHeading_CZ">-->
+      <!--<call fun="NavSetWaypointHere(WP_STDBY)"/>-->
+      <!--<while cond="1">-->
+        <!--<call fun="increase_nav_heading(&nav_heading,incrementForAvoidance)"/>-->
+        <!--<call fun="moveWaypointForwards(WP_GOAL,0.5)"/>-->
+        <!--<go wp="STDBY"/>-->
+      <!--</while>-->
+      <!--<exception cond="InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="GoGoal"/>-->
+    <!--</block>-->
+
+    <!--<block name="Featureless_Angle">-->
+      <!--<call fun="changeHeading_Featureless()"/>-->
+      <!--<deroute block="ChangeHeading_General"/>-->
+    <!--</block>-->
+
+    <!--<block name="ChangeHeading_General">-->
+      <!--<call fun="moveWaypointAngle(WP_GOAL,0.5)"/>-->
+      <!--<call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>-->
+      <!--<exception cond="InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL)) && !TURNING" deroute="GoGoal"/>-->
+    <!--</block>-->
     <!-- ////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
 
     <!-- Hover at the current location -->

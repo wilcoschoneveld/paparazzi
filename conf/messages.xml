@@ -900,7 +900,14 @@
   </message>
 
    <message name="OBJECT_DETECTION" id="112">
-     <field name="ChangeHeading" type="float" />
+     <field name="TURNING" type="uint8" />
+     <field name="FEATURELESS" type="uint8" />
+     <field name="FRONTAL_OBSTACLE" type="uint8" />
+     <field name="SIDE_OBSTACLE" type="uint8" />
+     <field name="flow_average_LF" type="float" />
+     <field name="flow_average_LC" type="float" />
+     <field name="flow_average_RC" type="float" />
+     <field name="flow_average_RF" type="float" />
    </message>
 
   <message name="MLX_SERIAL" id="113">
