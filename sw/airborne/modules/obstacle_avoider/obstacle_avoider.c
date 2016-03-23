@@ -253,9 +253,6 @@ uint8_t moveWaypointAngle(uint8_t waypoint, float distanceMeters){
 	struct EnuCoor_i new_coor;
 	struct EnuCoor_i *pos = stateGetPositionEnu_i(); // Get your current position
 
-	// Definition pi
-	float pi = 22/7;
-
 	// Calculate the sine and cosine of the heading the drone is keeping
 	float sin_heading = sinf(ANGLE_FLOAT_OF_BFP(nav_heading) + changeHeading_amount);
 	float cos_heading = cosf(ANGLE_FLOAT_OF_BFP(nav_heading) + changeHeading_amount);

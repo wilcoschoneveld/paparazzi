@@ -128,11 +128,23 @@
     </block>
 
     <block name="ChangeHeading_General">
-    <call fun="NavSetWaypointHere(WP_STDBY)"/>
-    <stay wp="STDBY"/>
     <call fun="moveWaypointAngle(WP_GOAL,2)"/>
     <call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>
+    <call fun="NavSetWaypointHere(WP_STDBY)"/>
+    <stay wp="STDBY"/>
+    <exception cond="block_time > 5" deroute="GoGoal"/>
+    <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="ChangeHeading_CZ"/>
     <!--<exception cond="InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL)) && !TURNING" deroute="GoGoal"/>-->
+    </block>ç
+
+    <block name="ChangeHeading_CZ">
+    <call fun="NavSetWaypointHere(WP_STDBY)"/>
+    <while cond="1">
+    <call fun="increase_nav_heading(&nav_heading,incrementForAvoidance)"/>
+    <call fun="moveWaypointForwards(WP_GOAL,0.5)"/>
+    <go wp="STDBY"/>
+    </while>
+    <exception cond="InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="GoGoal"/>
     </block>
 
     <!--<block name="MoveGoalForward">-->
