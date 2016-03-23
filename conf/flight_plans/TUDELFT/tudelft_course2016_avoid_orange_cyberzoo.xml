@@ -84,18 +84,35 @@
     <!-- ### OBSTACLE AVOIDANCE STRATEGY ### -->
     <!-- ################################### -->
 
-    <block name="Start">
-      <call fun="NavSetWaypointHere(WP_GOAL)"/>
-    </block>
-
     <block name="MoveGoalForward">
       <call fun="moveWaypointForwards(WP_GOAL, 1.25)"/>
+      <deroute block="GoGoal"/>
     </block>
 
     <block name="GoGoal">
-      <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="Hover"/>
+      <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="OutsideGoal"/>
+      <exception cond="FEATURELESS > 0" deroute="Featureless"/>
+      <!--<exception cond="FRONTAL_OBSTACLE > 0" deroute="AngleGoal"/>-->
+      <!--<exception cond="SIDE_OBSTACLE > 0" deroute="AngleGoal"/>-->
       <go wp="GOAL"/>
       <deroute block="MoveGoalForward"/>
+    </block>
+
+    <block name="Featureless">
+      <call fun="changeHeading_Featureless()"/>
+      <deroute block="AngleGoal"/>
+    </block>
+
+    <block name="OutsideGoal">
+      <call fun="changeHeading_Outside()"/>
+      <deroute block="AngleGoal"/>
+    </block>
+
+    <block name="AngleGoal">
+      <call fun="moveWaypointAngle(WP_GOAL, 1.25)"/>
+      <call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>
+      <while cond="LessThan(NavBlockTime(), 3)"/>
+      <deroute block="GoGoal"/>
     </block>
 
     <!-- ################################### -->
