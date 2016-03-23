@@ -29,10 +29,6 @@ float counter_RF[MEMORY];
 float counter_RC[MEMORY];
 float counter_LF[MEMORY];
 float counter_LC[MEMORY];
-float average_flow_RF[MEMORY];
-float average_flow_RC[MEMORY];
-float average_flow_LF[MEMORY];
-float average_flow_LC[MEMORY];
 
 // Counter
 int counter_turning;
@@ -48,8 +44,8 @@ uint8_t TURNING = FALSE;
 // SECOND CONDITION: Check featureless regions
 float counter_average[4];
 
-int threshold_feature_far = 1;
-int threshold_feature_close = 1;
+int threshold_feature_far = 5;
+int threshold_feature_close = 5;
 
 uint8_t FEATURELESS = FALSE;
 int featureless_indicator[4];
@@ -58,10 +54,9 @@ float changeHeading_Featureless_Far   = 45;
 float changeHeading_Featureless_Close = 90;
 
 // THIRD CONDITION: Check frontal obstacle
-float flow_average[4];
 
-float frontal_threshold_min = 3;
-float frontal_threshold_max = 150;
+float frontal_threshold_min = 10;
+float frontal_threshold_max = 30;
 float changeHeading_OF_Frontal = 180;
 float changeHeading_OF_Lateral = 90;
 uint8_t FRONTAL_OBSTACLE = FALSE;
@@ -95,19 +90,6 @@ void obstacle_avoider_init() {
 
 	counter_LC[0] = 0;
 	counter_LC[1] = 0;
-
-	// Initialize the variables related with optical flow
-	average_flow_RF[0] = 0;
-	average_flow_RF[1] = 0;
-
-	average_flow_RC[0] = 0;
-	average_flow_RC[1] = 0;
-
-	average_flow_LF[0] = 0;
-	average_flow_LF[1] = 0;
-
-	average_flow_LC[0] = 0;
-	average_flow_LC[1] = 0;
 }
 
 void obstacle_avoider_periodic() {
@@ -117,7 +99,7 @@ void obstacle_avoider_periodic() {
 	FEATURELESS = FALSE;
 	FRONTAL_OBSTACLE = FALSE;
 	SIDE_OBSTACLE = FALSE;
-	changeHeading_amount = 0;
+//	changeHeading_amount = 0;
 	featureless_indicator[0] = 0;
 	featureless_indicator[1] = 0;
 	featureless_indicator[2] = 0;
@@ -129,10 +111,6 @@ void obstacle_avoider_periodic() {
 	counter_RC[2] = regions[2].counter;
 	counter_LC[2] = regions[1].counter;
 	counter_LF[2] = regions[0].counter;
-	average_flow_RF[2] = regions[3].average;
-	average_flow_RC[2] = regions[2].average;
-	average_flow_LC[2] = regions[1].average;
-	average_flow_LF[2] = regions[0].average;
 
 	// Check turning
 	counter_turning = 0;
@@ -143,7 +121,7 @@ void obstacle_avoider_periodic() {
 	}
 
 	if (counter_turning > 0) {
-		TURNING = TRUE;
+		TURNING = 1;
 	} else {
 
 		// Check featureless regions
@@ -154,65 +132,59 @@ void obstacle_avoider_periodic() {
 
 //		if (counter_average[0] < threshold_feature_far) {
 //			featureless_indicator[0] = 1;
-//			FEATURELESS = TRUE;
+//			FEATURELESS = 1;
 //		} else {
 //			featureless_indicator[0] = 0;
 //		}
 
 		if (counter_average[1] < threshold_feature_close) {
 			featureless_indicator[1] = 1;
-			FEATURELESS = TRUE;
+			FEATURELESS = 1;
 		} else {
 			featureless_indicator[1] = 0;
 		}
 
 		if (counter_average[2] < threshold_feature_close) {
 			featureless_indicator[2] = 1;
-			FEATURELESS = TRUE;
+			FEATURELESS = 1;
 		} else {
 			featureless_indicator[2] = 0;
 		}
 
 //		if (counter_average[3] < threshold_feature_far) {
 //			featureless_indicator[3] = 1;
-//			FEATURELESS = TRUE;
+//			FEATURELESS = 1;
 //		} else {
 //			featureless_indicator[3] = 0;
 //		}
 
-		if (!FEATURELESS) {
-			// Check frontal obstacle
-			flow_average[0] = (average_flow_LF[2] + average_flow_LF[1] + average_flow_LF[0]) / 3;
-			flow_average[1] = (average_flow_LC[2] + average_flow_LC[1] + average_flow_LC[0]) / 3;
-			flow_average[2] = (average_flow_RC[2] + average_flow_RC[1] + average_flow_RC[0]) / 3;
-			flow_average[3] = (average_flow_RF[2] + average_flow_RF[1] + average_flow_RF[0]) / 3;
+		if (FEATURELESS ==0) {
 
-
-			if (flow_average[1] > frontal_threshold_min && flow_average[1] < frontal_threshold_max && flow_average[2] > frontal_threshold_min && flow_average[2] < frontal_threshold_max) {
-				FRONTAL_OBSTACLE = TRUE;
+			if (regions[1].average > frontal_threshold_min && regions[1].average < frontal_threshold_max && regions[2].average > frontal_threshold_min && regions[2].average < frontal_threshold_max) {
+				FRONTAL_OBSTACLE = 1;
 				changeHeading_amount = changeHeading_OF_Frontal;
-			} else if (flow_average[1] > frontal_threshold_min && flow_average[1] < frontal_threshold_max) {
-				FRONTAL_OBSTACLE = TRUE;
+			} else if (regions[1].average > frontal_threshold_min && regions[1].average < frontal_threshold_max) {
+				FRONTAL_OBSTACLE = 1;
 				changeHeading_amount = changeHeading_OF_Lateral;
-			} else if (flow_average[2] > frontal_threshold_min && flow_average[2] < frontal_threshold_max) {
-				FRONTAL_OBSTACLE = TRUE;
+			} else if (regions[2].average > frontal_threshold_min && regions[2].average < frontal_threshold_max) {
+				FRONTAL_OBSTACLE = 1;
 				changeHeading_amount = -changeHeading_OF_Lateral;
 			}
 
-			if (!FRONTAL_OBSTACLE) {
+			if (FRONTAL_OBSTACLE  ==0) {
 				// Check side obstacles
 
-				if (abs(flow_average[2] - flow_average[1]) > sideClose_threshold) {
-					SIDE_OBSTACLE = TRUE;
-					if (flow_average[2] > flow_average[1]) {
+				if (abs(regions[2].average - regions[1].average) > sideClose_threshold) {
+					SIDE_OBSTACLE = 1;
+					if (regions[2].average > regions[1].average) {
 						changeHeading_amount = -changeHeading_OF_sideClose;
 					} else {
 						changeHeading_amount = changeHeading_OF_sideClose;
 					}
 
-				} else if (abs(flow_average[3] - flow_average[0]) > sideFar_threshold) {
-					SIDE_OBSTACLE = TRUE;
-					if (flow_average[3] > flow_average[0]) {
+				} else if (abs(regions[3].average - regions[0].average) > sideFar_threshold) {
+					SIDE_OBSTACLE = 1;
+					if (regions[3].average > regions[0].average) {
 						changeHeading_amount = -changeHeading_OF_sideFar;
 					} else {
 						changeHeading_amount = changeHeading_OF_sideFar;
@@ -239,7 +211,7 @@ void obstacle_avoider_periodic() {
 	counter_LC[0] = counter_LC[1];
 	counter_LC[1] = counter_LC[2];
 
-	DOWNLINK_SEND_OBJECT_DETECTION(DefaultChannel, DefaultDevice, &TURNING, &FEATURELESS, &FRONTAL_OBSTACLE, &SIDE_OBSTACLE, &flow_average[0], &flow_average[1], &flow_average[2], &flow_average[3]);
+	DOWNLINK_SEND_OBJECT_DETECTION(DefaultChannel, DefaultDevice, &TURNING, &FEATURELESS, &FRONTAL_OBSTACLE, &SIDE_OBSTACLE, &regions[0].average, &regions[1].average, &regions[2].average, &regions[3].average, &counter_average[0], &counter_average[1], &counter_average[2], &counter_average[3]);
 
 }
 
@@ -285,8 +257,8 @@ uint8_t moveWaypointAngle(uint8_t waypoint, float distanceMeters){
 	float pi = 22/7;
 
 	// Calculate the sine and cosine of the heading the drone is keeping
-	float sin_heading = sinf(ANGLE_FLOAT_OF_BFP(nav_heading) + changeHeading_amount*pi/180);
-	float cos_heading = cosf(ANGLE_FLOAT_OF_BFP(nav_heading) + changeHeading_amount*pi/180);
+	float sin_heading = sinf(ANGLE_FLOAT_OF_BFP(nav_heading) + changeHeading_amount);
+	float cos_heading = cosf(ANGLE_FLOAT_OF_BFP(nav_heading) + changeHeading_amount);
 
 	// Now determine where to place the waypoint you want to go to
 	new_coor.x = pos->x + POS_BFP_OF_REAL(sin_heading * (distanceMeters));

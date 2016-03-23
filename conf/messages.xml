@@ -908,6 +908,11 @@
      <field name="flow_average_LC" type="float" />
      <field name="flow_average_RC" type="float" />
      <field name="flow_average_RF" type="float" />
+     <field name="cnt_average_LF" type="float" />
+     <field name="cnt_average_LC" type="float" />
+     <field name="cnt_average_RC" type="float" />
+     <field name="cnt_average_RF" type="float" />
+     <field name="cnt_average_RF" type="float" />
    </message>
 
   <message name="MLX_SERIAL" id="113">

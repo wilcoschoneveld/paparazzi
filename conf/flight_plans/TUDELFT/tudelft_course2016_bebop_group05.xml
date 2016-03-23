@@ -114,21 +114,25 @@
     <!-- ////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
 
     <block name="MoveGoalForward">
-      <call fun="moveWaypointForwards(WP_GOAL,1)"/>
+      <call fun="moveWaypointForwards(WP_GOAL,2)"/>
       <deroute block="GoGoal"/>
-      <exception cond="FRONTAL_OBSTACLE >0" deroute="Land here"/>
-      <!--<exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="ChangeHeading_CZ"/>-->
+      <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="Land here"/>
     </block>
 
     <block name="GoGoal">
-      <!--<stay wp="GOAL"/>-->
-      <attitude pitch="-4" roll="0" alt="1.5"/>
-      <!--<exception cond="block_time>3" deroute="Land here"/>-->
+      <stay wp="GOAL"/>
+      <!--<attitude pitch="-3" roll="0" alt="1.5"/>-->
+      <exception cond="block_time > 1" deroute="MoveGoalForward"/>
+      <exception cond="FRONTAL_OBSTACLE >0" deroute="ChangeHeading_General"/>
+      <!--<exception cond="FEATURELESS >0" deroute="Land here"/>-->
     </block>
 
-    <block name="StayHere">
+    <block name="ChangeHeading_General">
     <call fun="NavSetWaypointHere(WP_STDBY)"/>
     <stay wp="STDBY"/>
+    <call fun="moveWaypointAngle(WP_GOAL,2)"/>
+    <call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>
+    <!--<exception cond="InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL)) && !TURNING" deroute="GoGoal"/>-->
     </block>
 
     <!--<block name="MoveGoalForward">-->

@@ -63,11 +63,22 @@ float yaw_rate;
 // BALANCE
 struct flow regions[4];
 
+// FILTER NOISE
+int threshold_noise = 50;
+float filter_previous_average_flow[4];
+float alpha = 0.5;
+
 void corner_detection_init(void)
 {
   // Initialize images
   image_create(&img_gray, IMG_WIDTH, IMG_HEIGHT, IMAGE_GRAYSCALE);
   image_create(&img_old, IMG_WIDTH, IMG_HEIGHT, IMAGE_GRAYSCALE);
+
+  // Initialize previous filter value
+  filter_previous_average_flow[0] = 0;
+  filter_previous_average_flow[1] = 0;
+  filter_previous_average_flow[2] = 0;
+  filter_previous_average_flow[3] = 0;
 
   // Add detection function to CV
   cv_add(corner_detection_func);
@@ -147,8 +158,17 @@ bool_t corner_detection_func(struct image_t* img)
   // Calculate average of flow regions
   for (int i = 0; i < 4; ++i) {
     // If region counter is greater than zero, calculate average
-    if (regions[i].counter > 0)
+    if (regions[i].counter > 0) {
       regions[i].average = regions[i].total / regions[i].counter;
+    }
+
+    // If the average is higher than the threshold, then we do not use it
+    if (regions[i].average > threshold_noise) {
+      regions[i].average = threshold_noise;
+    }
+
+    // Filter
+    regions[i].average = alpha * regions[i].average + (1-alpha) * filter_previous_average_flow[i];
   }
 
   DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel,
@@ -164,6 +184,12 @@ bool_t corner_detection_func(struct image_t* img)
 
   // Copy new image to old image
   image_copy(&img_gray, &img_old);
+
+  // Copy flow values
+  filter_previous_average_flow[0] = regions[0].average;
+  filter_previous_average_flow[1] = regions[1].average;
+  filter_previous_average_flow[2] = regions[2].average;
+  filter_previous_average_flow[3] = regions[3].average;
 
   // Free memory
   free(features); features = NULL;
