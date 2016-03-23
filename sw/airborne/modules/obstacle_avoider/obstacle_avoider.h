@@ -14,6 +14,7 @@
 #include <inttypes.h>
 
 extern int32_t incrementForAvoidance;
+extern int randomIncrement;
 extern void obstacle_avoider_init(void);
 extern void obstacle_avoider_periodic(void);
 extern uint8_t moveWaypointForwards(uint8_t waypoint, float distanceMeters);
@@ -21,6 +22,7 @@ extern uint8_t moveWaypointAngle(uint8_t waypoint, float distanceMeters);
 extern uint8_t increase_nav_heading(int32_t *heading, int32_t increment);
 extern uint8_t chooseRandomIncrementAvoidance(void);
 extern uint8_t changeHeading_Featureless(void);
+extern uint8_t changeHeading_Outside(void);
 
 // Divergence condition
 struct exceptions_t {

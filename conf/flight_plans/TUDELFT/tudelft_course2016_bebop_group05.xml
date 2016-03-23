@@ -57,7 +57,8 @@
 
   <!-- Global exceptions -->
   <exceptions>
-    <exception cond="!InsideCyberZoo(GetPosX(), GetPosY())" deroute="Hover"/>
+    <!--<exception cond="!InsideCyberZoo(GetPosX(), GetPosY())" deroute="Hover"/>-->
+    <exception cond="!InsideObstacleZone(GetPosX(), GetPosY())" deroute="Hover"/>
     <exception cond="datalink_time > 2" deroute="Standby"/>
     <exception cond="electrical.bat_low && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Flare')) && !(nav_block == IndexOfBlock('Landed'))" deroute="Land"/>
     <exception cond="electrical.bat_critical && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Flare')) && !(nav_block == IndexOfBlock('Landed'))" deroute="Land here"/>
@@ -114,37 +115,45 @@
     <!-- ////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
 
     <block name="MoveGoalForward">
-      <call fun="moveWaypointForwards(WP_GOAL,2)"/>
+      <call fun="moveWaypointForwards(WP_GOAL,1.25)"/>
       <deroute block="GoGoal"/>
-      <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="Land here"/>
+      <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="CZ_Angle"/>
     </block>
 
     <block name="GoGoal">
       <stay wp="GOAL"/>
-      <!--<attitude pitch="-3" roll="0" alt="1.5"/>-->
-      <exception cond="block_time > 1" deroute="MoveGoalForward"/>
-      <exception cond="FRONTAL_OBSTACLE >0" deroute="ChangeHeading_General"/>
-      <!--<exception cond="FEATURELESS >0" deroute="Land here"/>-->
+      <exception cond="block_time > 3" deroute="MoveGoalForward"/>
+      <!--<exception cond="FRONTAL_OBSTACLE >0" deroute="ChangeHeading_General"/>-->
+      <!--<exception cond="FEATURELESS >0" deroute="Featureless_Angle"/>-->
+      <!--<exception cond="SIDE_OBSTACLE >0" deroute="ChangeHeading_General"/>-->
     </block>
 
     <block name="ChangeHeading_General">
-    <call fun="moveWaypointAngle(WP_GOAL,2)"/>
+    <call fun="moveWaypointAngle(WP_GOAL,1.25)"/>
     <call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>
-    <call fun="NavSetWaypointHere(WP_STDBY)"/>
-    <stay wp="STDBY"/>
-    <exception cond="block_time > 5" deroute="GoGoal"/>
-    <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="ChangeHeading_CZ"/>
-    <!--<exception cond="InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL)) && !TURNING" deroute="GoGoal"/>-->
-    </block>ç
+    <!--<call fun="NavSetWaypointHere(WP_STDBY)"/>-->
+    <!--<go wp="STDBY"/>-->
+    <deroute block="GoGoal"/>
+    <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="CZ_Angle"/>
+    </block>
 
     <block name="ChangeHeading_CZ">
-    <call fun="NavSetWaypointHere(WP_STDBY)"/>
-    <while cond="1">
-    <call fun="increase_nav_heading(&nav_heading,incrementForAvoidance)"/>
-    <call fun="moveWaypointForwards(WP_GOAL,0.5)"/>
-    <go wp="STDBY"/>
-    </while>
+    <call fun="moveWaypointAngle(WP_GOAL,1.25)"/>
+    <call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>
+    <!--<call fun="NavSetWaypointHere(WP_STDBY)"/>-->
+    <!--<go wp="STDBY"/>-->
+    <deroute block="CZ_Angle"/>
     <exception cond="InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="GoGoal"/>
+    </block>
+
+    <block name="Featureless_Angle">
+    <call fun="changeHeading_Featureless()"/>
+    <deroute block="ChangeHeading_General"/>
+    </block>
+
+    <block name="CZ_Angle">
+      <call fun="changeHeading_Outside()"/>
+      <deroute block="ChangeHeading_CZ"/>
     </block>
 
     <!--<block name="MoveGoalForward">-->

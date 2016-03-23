@@ -22,6 +22,7 @@
 #define MEMORY 3
 
 int32_t incrementForAvoidance;
+int randomIncrement;
 
 // Initialize vectors
 float turning[MEMORY];
@@ -99,7 +100,6 @@ void obstacle_avoider_periodic() {
 	FEATURELESS = FALSE;
 	FRONTAL_OBSTACLE = FALSE;
 	SIDE_OBSTACLE = FALSE;
-//	changeHeading_amount = 0;
 	featureless_indicator[0] = 0;
 	featureless_indicator[1] = 0;
 	featureless_indicator[2] = 0;
@@ -296,5 +296,12 @@ uint8_t changeHeading_Featureless(){
 		changeHeading_amount = 180;
 	}
 
+	return FALSE;
+}
+
+uint8_t changeHeading_Outside(){
+
+	int r = rand() % 60;
+	changeHeading_amount = 150 + r;
 	return FALSE;
 }
