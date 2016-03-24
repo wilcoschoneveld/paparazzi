@@ -19,7 +19,7 @@
 #include "subsystems/datalink/telemetry.h"
 #include <math.h>
 
-#define MEMORY 3
+#define MEMORY 5
 
 int32_t incrementForAvoidance;
 int randomIncrement;
@@ -34,13 +34,15 @@ int counter_turning;
 float changeHeading_amount = 0;
 
 // FIRST CONDITION: Check if the aircraft is turning
-float threshold_turning = 0.2;
+float threshold_turning = 0.025;
 
 uint8_t TURNING = FALSE;
 
 // SECOND CONDITION: Check featureless regions
+//int threshold_feature_far = 3;
+//int threshold_feature_close = 5;
 
-int threshold_feature_far = 3;
+int threshold_feature_far = 0;
 int threshold_feature_close = 5;
 
 uint8_t FEATURELESS = FALSE;
@@ -50,8 +52,7 @@ float changeHeading_Featureless_Far   = 20;
 float changeHeading_Featureless_Close = 90;
 
 // THIRD CONDITION: Check frontal obstacle
-
-float frontal_threshold_min = 13;
+float frontal_threshold_min = 10;
 float frontal_threshold_max = 50;
 float changeHeading_OF_Frontal = 180;
 float changeHeading_OF_Lateral = 90;
@@ -73,6 +74,8 @@ void obstacle_avoider_init() {
 	// Initialize the variables related with turning
 	turning[0] = 0;
 	turning[1] = 0;
+	turning[2] = 0;
+	turning[3] = 0;
 }
 
 void obstacle_avoider_periodic() {
@@ -88,7 +91,7 @@ void obstacle_avoider_periodic() {
 	featureless_indicator[3] = 0;
 
 	// Update current values
-	turning[2]    = yaw_rate;
+	turning[4]    = yaw_rate;
 
 	// Check turning
 	counter_turning = 0;
@@ -100,6 +103,9 @@ void obstacle_avoider_periodic() {
 
 	if (counter_turning > 0) {
 		TURNING = 1;
+		for (int k = 0; k <4 ; ++k) {
+			regions[k].average = 0;
+		}
 	} else {
 
 		// Loop through the regions
@@ -154,6 +160,8 @@ void obstacle_avoider_periodic() {
 	// Prepare variables for the next iteration
 	turning[0] = turning[1];
 	turning[1] = turning[2];
+	turning[2] = turning[3];
+	turning[3] = turning[4];
 
 	DOWNLINK_SEND_OBJECT_DETECTION(DefaultChannel, DefaultDevice,
 								   &TURNING,
