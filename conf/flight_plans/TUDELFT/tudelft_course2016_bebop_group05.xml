@@ -43,7 +43,7 @@
 
   <!-- Global exceptions -->
   <exceptions>
-    <exception cond="datalink_time > 2" deroute="Hover"/>
+    <exception cond="datalink_time > 2 && nav_is_in_flight()" deroute="Hover"/>
     <exception cond="electrical.bat_low && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Hold'))" deroute="Land"/>
   </exceptions>
 
@@ -83,7 +83,7 @@
     <!-- ### OBSTACLE AVOIDANCE STRATEGY ### -->
     <!-- ################################### -->
 
-    <block name="MoveGoalForward">
+    <block key="g" name="MoveGoalForward" strip_button="Go" strip_icon="flat_theme/observe.png">
       <call fun="moveWaypointForwards(WP_GOAL, 1)"/>
       <deroute block="GoGoal"/>
     </block>
@@ -119,7 +119,7 @@
     <!-- Land at the current location -->
     <block key="l" name="Land" strip_button="Land" strip_icon="flat_theme/downdown.png">
       <exception cond="NavDetectGround()" deroute="Hold"/> <!-- Condition is not triggered properly with bebop -->
-      <exception cond="block_time > 2 && stateGetSpeedEnu_f()->z > 0" deroute="Hold"/>
+      <exception cond="block_time > 1 && stateGetSpeedEnu_f()->z > 0" deroute="Hold"/>
       <call fun="NavSetWaypointHere(WP_STDBY)"/>
       <call fun="NavStartDetectGround()"/>
       <stay wp="STDBY" vmode="climb" climb="nav_descend_vspeed"/>

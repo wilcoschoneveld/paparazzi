@@ -32,7 +32,7 @@
 
 
 struct flow {
-    int counter;
+    float counter;
     float total;
     float average;
 };

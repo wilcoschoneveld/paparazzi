@@ -26,10 +26,6 @@ int randomIncrement;
 
 // Initialize vectors
 float turning[MEMORY];
-float counter_RF[MEMORY];
-float counter_RC[MEMORY];
-float counter_LF[MEMORY];
-float counter_LC[MEMORY];
 
 // Counter
 int counter_turning;
@@ -43,10 +39,9 @@ float threshold_turning = 0.2;
 uint8_t TURNING = FALSE;
 
 // SECOND CONDITION: Check featureless regions
-float counter_average[4];
 
-int threshold_feature_far = 2;
-int threshold_feature_close = 4;
+int threshold_feature_far = 3;
+int threshold_feature_close = 5;
 
 uint8_t FEATURELESS = FALSE;
 int featureless_indicator[4];
@@ -56,8 +51,8 @@ float changeHeading_Featureless_Close = 90;
 
 // THIRD CONDITION: Check frontal obstacle
 
-float frontal_threshold_min = 10;
-float frontal_threshold_max = 30;
+float frontal_threshold_min = 20;
+float frontal_threshold_max = 50;
 float changeHeading_OF_Frontal = 180;
 float changeHeading_OF_Lateral = 90;
 uint8_t FRONTAL_OBSTACLE = FALSE;
@@ -78,19 +73,6 @@ void obstacle_avoider_init() {
 	// Initialize the variables related with turning
 	turning[0] = 0;
 	turning[1] = 0;
-
-	// Initialize the variables related with feature detection
-	counter_RF[0] = 0;
-	counter_RF[1] = 0;
-
-	counter_RC[0] = 0;
-	counter_RC[1] = 0;
-
-	counter_LF[0] = 0;
-	counter_LF[1] = 0;
-
-	counter_LC[0] = 0;
-	counter_LC[1] = 0;
 }
 
 void obstacle_avoider_periodic() {
@@ -107,10 +89,6 @@ void obstacle_avoider_periodic() {
 
 	// Update current values
 	turning[2]    = yaw_rate;
-	counter_RF[2] = regions[3].counter;
-	counter_RC[2] = regions[2].counter;
-	counter_LC[2] = regions[1].counter;
-	counter_LF[2] = regions[0].counter;
 
 	// Check turning
 	counter_turning = 0;
@@ -124,19 +102,13 @@ void obstacle_avoider_periodic() {
 		TURNING = 1;
 	} else {
 
-		// Check featureless regions
-		counter_average[0] = (counter_LF[2] + counter_LF[1] + counter_LF[0]) / 3;
-		counter_average[1] = (counter_LC[2] + counter_LC[1] + counter_LC[0]) / 3;
-		counter_average[2] = (counter_RC[2] + counter_RC[1] + counter_RC[0]) / 3;
-		counter_average[3] = (counter_RF[2] + counter_RF[1] + counter_RF[0]) / 3;
-
 		// Loop through the regions
 		for (int i = 0; i < 4; ++i) {
 			// Threshold is dependent on region location
 			float t = (i > 0 && i < 3) ? threshold_feature_close : threshold_feature_far;
 
 			// If counter is below threshold, set featureless
-			if (counter_average[i] < t) {
+			if (regions[i].counter < t) {
 				featureless_indicator[i] = 1;
 				FEATURELESS = 1;
 			}
@@ -183,19 +155,19 @@ void obstacle_avoider_periodic() {
 	turning[0] = turning[1];
 	turning[1] = turning[2];
 
-	counter_RF[0] = counter_RF[1];
-	counter_RF[1] = counter_RF[2];
-
-	counter_RC[0] = counter_RC[1];
-	counter_RC[1] = counter_RC[2];
-
-	counter_LF[0] = counter_LF[1];
-	counter_LF[1] = counter_LF[2];
-
-	counter_LC[0] = counter_LC[1];
-	counter_LC[1] = counter_LC[2];
-
-	DOWNLINK_SEND_OBJECT_DETECTION(DefaultChannel, DefaultDevice, &TURNING, &FEATURELESS, &FRONTAL_OBSTACLE, &SIDE_OBSTACLE, &regions[0].average, &regions[1].average, &regions[2].average, &regions[3].average, &counter_average[0], &counter_average[1], &counter_average[2], &counter_average[3]);
+	DOWNLINK_SEND_OBJECT_DETECTION(DefaultChannel, DefaultDevice,
+								   &TURNING,
+								   &FEATURELESS,
+								   &FRONTAL_OBSTACLE,
+								   &SIDE_OBSTACLE,
+								   &regions[0].average,
+								   &regions[1].average,
+								   &regions[2].average,
+								   &regions[3].average,
+								   &regions[0].counter,
+								   &regions[1].counter,
+								   &regions[2].counter,
+								   &regions[3].counter);
 
 }
 
@@ -296,7 +268,7 @@ uint8_t changeHeading_Featureless() {
 
 uint8_t changeHeading_Outside(){
 
-	int r = rand() % 40;
-	changeHeading_amount = 150 + r;
+	int r = rand() % 20;
+	changeHeading_amount = 80 + r;
 	return FALSE;
 }

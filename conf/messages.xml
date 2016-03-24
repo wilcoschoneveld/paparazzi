@@ -864,10 +864,10 @@
   </message>
 
   <message name="OPTICAL_FLOW" id="108">
-    <field name="counter_right_far" type="int32" />
-    <field name="counter_right_close" type="int32" />
-    <field name="counter_left_close" type="int32" />
-    <field name="counter_left_far" type="int32" />
+    <field name="counter_right_far" type="float" />
+    <field name="counter_right_close" type="float" />
+    <field name="counter_left_close" type="float" />
+    <field name="counter_left_far" type="float" />
     <field name="med_flow_right_far" type="float" />
     <field name="med_flow_right_close" type="float" />
     <field name="med_flow_left_close" type="float" />
