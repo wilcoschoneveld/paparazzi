@@ -45,7 +45,7 @@ uint8_t TURNING = FALSE;
 // SECOND CONDITION: Check featureless regions
 float counter_average[4];
 
-int threshold_feature_far = 5;
+int threshold_feature_far = 3;
 int threshold_feature_close = 5;
 
 uint8_t FEATURELESS = FALSE;
@@ -63,8 +63,8 @@ float changeHeading_OF_Lateral = 90;
 uint8_t FRONTAL_OBSTACLE = FALSE;
 
 // FOURTH CONDITION: Check side obstacles
-float sideClose_threshold = 50;
-float sideFar_threshold   = 50;
+float sideClose_threshold = 10;
+float sideFar_threshold   = 10;
 float changeHeading_OF_sideClose = 60;
 float changeHeading_OF_sideFar   = 30;
 uint8_t SIDE_OBSTACLE = FALSE;
@@ -130,12 +130,12 @@ void obstacle_avoider_periodic() {
 		counter_average[2] = (counter_RC[2] + counter_RC[1] + counter_RC[0]) / 3;
 		counter_average[3] = (counter_RF[2] + counter_RF[1] + counter_RF[0]) / 3;
 
-//		if (counter_average[0] < threshold_feature_far) {
-//			featureless_indicator[0] = 1;
-//			FEATURELESS = 1;
-//		} else {
-//			featureless_indicator[0] = 0;
-//		}
+		if (counter_average[0] < threshold_feature_far) {
+			featureless_indicator[0] = 1;
+			FEATURELESS = 1;
+		} else {
+			featureless_indicator[0] = 0;
+		}
 
 		if (counter_average[1] < threshold_feature_close) {
 			featureless_indicator[1] = 1;
@@ -151,12 +151,12 @@ void obstacle_avoider_periodic() {
 			featureless_indicator[2] = 0;
 		}
 
-//		if (counter_average[3] < threshold_feature_far) {
-//			featureless_indicator[3] = 1;
-//			FEATURELESS = 1;
-//		} else {
-//			featureless_indicator[3] = 0;
-//		}
+		if (counter_average[3] < threshold_feature_far) {
+			featureless_indicator[3] = 1;
+			FEATURELESS = 1;
+		} else {
+			featureless_indicator[3] = 0;
+		}
 
 		if (FEATURELESS ==0) {
 
@@ -301,7 +301,7 @@ uint8_t changeHeading_Featureless(){
 
 uint8_t changeHeading_Outside(){
 
-	int r = rand() % 60;
+	int r = rand() % 40;
 	changeHeading_amount = 150 + r;
 	return FALSE;
 }
