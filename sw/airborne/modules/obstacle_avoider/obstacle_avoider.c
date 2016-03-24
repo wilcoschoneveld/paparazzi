@@ -19,24 +19,11 @@
 #include "subsystems/datalink/telemetry.h"
 #include <math.h>
 
-#define MEMORY 5
-
 int32_t incrementForAvoidance;
 int randomIncrement;
 
-// Initialize vectors
-float turning[MEMORY];
-
-// Counter
-int counter_turning;
-
 // Change heading
 float changeHeading_amount = 0;
-
-// FIRST CONDITION: Check if the aircraft is turning
-float threshold_turning = 0.025;
-
-uint8_t TURNING = FALSE;
 
 // SECOND CONDITION: Check featureless regions
 //int threshold_feature_far = 3;
@@ -70,18 +57,11 @@ void obstacle_avoider_init() {
 	// Seed the random number generator with current time
 	srand(time(NULL));
 	chooseRandomIncrementAvoidance();
-
-	// Initialize the variables related with turning
-	turning[0] = 0;
-	turning[1] = 0;
-	turning[2] = 0;
-	turning[3] = 0;
 }
 
 void obstacle_avoider_periodic() {
 
 	// Initialize variables
-	TURNING = FALSE;
 	FEATURELESS = FALSE;
 	FRONTAL_OBSTACLE = FALSE;
 	SIDE_OBSTACLE = FALSE;
@@ -90,23 +70,8 @@ void obstacle_avoider_periodic() {
 	featureless_indicator[2] = 0;
 	featureless_indicator[3] = 0;
 
-	// Update current values
-	turning[4]    = yaw_rate;
 
-	// Check turning
-	counter_turning = 0;
-	for (int i = 0; i <MEMORY ; ++i) {
-		if (abs(turning[i]) > threshold_turning) {
-			counter_turning++;
-		}
-	}
-
-	if (counter_turning > 0) {
-		TURNING = 1;
-		for (int k = 0; k <4 ; ++k) {
-			regions[k].average = 0;
-		}
-	} else {
+	if (TURNING ==0) {
 
 		// Loop through the regions
 		for (int i = 0; i < 4; ++i) {
@@ -120,9 +85,10 @@ void obstacle_avoider_periodic() {
 			}
 		}
 
-		if (FEATURELESS ==0) {
+		if (FEATURELESS == 0) {
 
-			if (regions[1].average > frontal_threshold_min && regions[1].average < frontal_threshold_max && regions[2].average > frontal_threshold_min && regions[2].average < frontal_threshold_max) {
+			if (regions[1].average > frontal_threshold_min && regions[1].average < frontal_threshold_max &&
+				regions[2].average > frontal_threshold_min && regions[2].average < frontal_threshold_max) {
 				FRONTAL_OBSTACLE = 1;
 				changeHeading_amount = changeHeading_OF_Frontal;
 			} else if (regions[1].average > frontal_threshold_min && regions[1].average < frontal_threshold_max) {
@@ -133,7 +99,7 @@ void obstacle_avoider_periodic() {
 				changeHeading_amount = -changeHeading_OF_Lateral;
 			}
 
-			if (FRONTAL_OBSTACLE  ==0) {
+			if (FRONTAL_OBSTACLE == 0) {
 				// Check side obstacles
 
 				if (abs(regions[2].average - regions[1].average) > sideClose_threshold) {
@@ -157,11 +123,6 @@ void obstacle_avoider_periodic() {
 		}
 	}
 
-	// Prepare variables for the next iteration
-	turning[0] = turning[1];
-	turning[1] = turning[2];
-	turning[2] = turning[3];
-	turning[3] = turning[4];
 
 	DOWNLINK_SEND_OBJECT_DETECTION(DefaultChannel, DefaultDevice,
 								   &TURNING,

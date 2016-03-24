@@ -37,7 +37,6 @@ extern float flow_average[4];
 extern float changeHeading_amount;
 
 // Exceptions
-extern uint8_t TURNING;
 extern uint8_t FEATURELESS;
 extern uint8_t FRONTAL_OBSTACLE;
 extern uint8_t SIDE_OBSTACLE;

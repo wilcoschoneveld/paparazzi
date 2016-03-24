@@ -53,6 +53,7 @@ extern uint16_t lk_max_points;
 
 // Yaw rate
 extern float yaw_rate;
+extern uint8_t TURNING;
 
 // Feature counter
 extern uint16_t feature_cnt;

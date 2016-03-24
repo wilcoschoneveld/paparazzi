@@ -35,6 +35,8 @@
 #define IMG_WIDTH 272
 #define IMG_HEIGHT 272
 
+#define MEMORY 5
+
 // FAST SETTINGS
 bool_t fast_show_features = FALSE;
 uint8_t fast_threshold    = 5;
@@ -70,6 +72,12 @@ float filter_previous_counter[4];
 float alpha = 0.5;
 float alpha_counter = 0.5;
 
+// FIRST CONDITION: Check if the aircraft is turning
+float threshold_turning = 0.025;
+uint8_t TURNING = FALSE;
+float turning[MEMORY];
+int counter_turning;
+
 void corner_detection_init(void)
 {
   // Initialize images
@@ -86,6 +94,13 @@ void corner_detection_init(void)
   filter_previous_counter[1] = 0;
   filter_previous_counter[2] = 0;
   filter_previous_counter[3] = 0;
+
+  // Initialize the variables related with turning
+  TURNING = FALSE;
+  turning[0] = 0;
+  turning[1] = 0;
+  turning[2] = 0;
+  turning[3] = 0;
 
   // Add detection function to CV
   cv_add(corner_detection_func);
@@ -179,6 +194,24 @@ bool_t corner_detection_func(struct image_t* img)
     regions[i].counter = alpha_counter * regions[i].counter + (1-alpha_counter) * filter_previous_counter[i];
   }
 
+  // Update current values
+  turning[4] = yaw_rate;
+
+  // Check turning
+  counter_turning = 0;
+  for (int i = 0; i <MEMORY ; ++i) {
+    if (abs(turning[i]) > threshold_turning) {
+      counter_turning++;
+    }
+  }
+  TURNING = 0;
+  if (counter_turning > 0) {
+    TURNING = 1;
+    for (int i = 0; i <4 ; ++i) {
+      regions[i].average = 0;
+    }
+  }
+
   DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel,
                              DefaultDevice,
                              &regions[3].counter,
@@ -192,6 +225,12 @@ bool_t corner_detection_func(struct image_t* img)
 
   // Copy new image to old image
   image_copy(&img_gray, &img_old);
+
+  // Prepare variables for the next iteration
+  turning[0] = turning[1];
+  turning[1] = turning[2];
+  turning[2] = turning[3];
+  turning[3] = turning[4];
 
   // Copy flow values
   filter_previous_average_flow[0] = regions[0].average;
