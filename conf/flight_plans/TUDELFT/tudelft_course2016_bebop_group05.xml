@@ -91,7 +91,7 @@
     <block name="GoGoal">
       <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="OutsideGoal"/>
       <exception cond="FEATURELESS > 0" deroute="Featureless"/>
-      <!--<exception cond="FRONTAL_OBSTACLE > 0" deroute="AngleGoal"/>-->
+      <exception cond="FRONTAL_OBSTACLE > 0" deroute="AngleGoal"/>
       <!--<exception cond="SIDE_OBSTACLE > 0" deroute="AngleGoal"/>-->
       <go wp="GOAL"/>
       <deroute block="MoveGoalForward"/>

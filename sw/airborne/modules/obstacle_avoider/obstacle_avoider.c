@@ -51,7 +51,7 @@ float changeHeading_Featureless_Close = 90;
 
 // THIRD CONDITION: Check frontal obstacle
 
-float frontal_threshold_min = 20;
+float frontal_threshold_min = 13;
 float frontal_threshold_max = 50;
 float changeHeading_OF_Frontal = 180;
 float changeHeading_OF_Lateral = 90;
