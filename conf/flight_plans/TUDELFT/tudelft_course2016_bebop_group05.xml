@@ -44,8 +44,7 @@
   <!-- Global exceptions -->
   <exceptions>
     <exception cond="datalink_time > 2" deroute="Hover"/>
-    <!--<exception cond="electrical.bat_low && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Flare')) && !(nav_block == IndexOfBlock('Landed'))" deroute="Land"/>-->
-    <!--<exception cond="electrical.bat_critical && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Flare')) && !(nav_block == IndexOfBlock('Landed'))" deroute="Land"/>-->
+    <exception cond="electrical.bat_low && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Hold'))" deroute="Land"/>
   </exceptions>
 
   <!-- Blocks describing the units of the mission -->
@@ -119,7 +118,8 @@
 
     <!-- Land at the current location -->
     <block key="l" name="Land" strip_button="Land" strip_icon="flat_theme/downdown.png">
-      <exception cond="NavDetectGround()" deroute="Hold"/>
+      <exception cond="NavDetectGround()" deroute="Hold"/> <!-- Condition is not triggered properly with bebop -->
+      <exception cond="block_time > 2 && stateGetSpeedEnu_f()->z > 0" deroute="Hold"/>
       <call fun="NavSetWaypointHere(WP_STDBY)"/>
       <call fun="NavStartDetectGround()"/>
       <stay wp="STDBY" vmode="climb" climb="nav_descend_vspeed"/>
