@@ -108,6 +108,8 @@
     </block>
 
     <block name="AngleGoal">
+      <call fun="NavSetWaypointHere(WP_GOAL)"/>
+      <stay wp="GOAL" until="stage_time > 1"/>
       <call fun="moveWaypointAngle(WP_GOAL, 1)"/>
       <call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>
       <while cond="LessThan(NavBlockTime(), 2.5)"/>
