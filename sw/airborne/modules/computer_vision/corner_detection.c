@@ -51,7 +51,7 @@ uint16_t lk_half_window_size = 10;
 uint16_t lk_subpixel_factor  = 10;
 uint8_t lk_max_iterations    = 10;
 uint8_t lk_step_threshold    = 2;
-uint16_t lk_max_points       = 50;
+uint16_t lk_max_points       = 100;
 
 // IMG = 272 x 272
 struct image_t img_gray;

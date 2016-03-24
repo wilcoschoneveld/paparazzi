@@ -45,13 +45,13 @@ uint8_t TURNING = FALSE;
 // SECOND CONDITION: Check featureless regions
 float counter_average[4];
 
-int threshold_feature_far = 3;
-int threshold_feature_close = 5;
+int threshold_feature_far = 2;
+int threshold_feature_close = 4;
 
 uint8_t FEATURELESS = FALSE;
 int featureless_indicator[4];
 
-float changeHeading_Featureless_Far   = 45;
+float changeHeading_Featureless_Far   = 20;
 float changeHeading_Featureless_Close = 90;
 
 // THIRD CONDITION: Check frontal obstacle
@@ -130,32 +130,16 @@ void obstacle_avoider_periodic() {
 		counter_average[2] = (counter_RC[2] + counter_RC[1] + counter_RC[0]) / 3;
 		counter_average[3] = (counter_RF[2] + counter_RF[1] + counter_RF[0]) / 3;
 
-		if (counter_average[0] < threshold_feature_far) {
-			featureless_indicator[0] = 1;
-			FEATURELESS = 1;
-		} else {
-			featureless_indicator[0] = 0;
-		}
+		// Loop through the regions
+		for (int i = 0; i < 4; ++i) {
+			// Threshold is dependent on region location
+			float t = (i > 0 && i < 3) ? threshold_feature_close : threshold_feature_far;
 
-		if (counter_average[1] < threshold_feature_close) {
-			featureless_indicator[1] = 1;
-			FEATURELESS = 1;
-		} else {
-			featureless_indicator[1] = 0;
-		}
-
-		if (counter_average[2] < threshold_feature_close) {
-			featureless_indicator[2] = 1;
-			FEATURELESS = 1;
-		} else {
-			featureless_indicator[2] = 0;
-		}
-
-		if (counter_average[3] < threshold_feature_far) {
-			featureless_indicator[3] = 1;
-			FEATURELESS = 1;
-		} else {
-			featureless_indicator[3] = 0;
+			// If counter is below threshold, set featureless
+			if (counter_average[i] < t) {
+				featureless_indicator[i] = 1;
+				FEATURELESS = 1;
+			}
 		}
 
 		if (FEATURELESS ==0) {
@@ -280,20 +264,31 @@ uint8_t chooseRandomIncrementAvoidance(){
 	return FALSE;
 }
 
-uint8_t changeHeading_Featureless(){
+uint8_t changeHeading_Featureless() {
 
-	if (featureless_indicator[0] == 1 && featureless_indicator[1] == 0 && featureless_indicator[2] == 0 && featureless_indicator[3] == 0) {
-		changeHeading_amount = changeHeading_Featureless_Far;
-	} else if ((featureless_indicator[1] == 1 && featureless_indicator[2] == 0 && featureless_indicator[3] == 0) || (featureless_indicator[0] == 1 && featureless_indicator[1] == 0 && featureless_indicator[2] == 1 && featureless_indicator[3] == 0)) {
-		changeHeading_amount = changeHeading_Featureless_Close;
-	} else if ((featureless_indicator[0] == 0 && featureless_indicator[1] == 0 && featureless_indicator[2] == 1) || (featureless_indicator[0] == 0 && featureless_indicator[1] == 1 && featureless_indicator[2] == 0 && featureless_indicator[3] == 1)) {
-		changeHeading_amount = -changeHeading_Featureless_Close;
-	} else if (featureless_indicator[0] == 0 && featureless_indicator[1] == 0 && featureless_indicator[2] == 0 && featureless_indicator[3] == 1) {
-		changeHeading_amount = -changeHeading_Featureless_Far;
-	} else if (featureless_indicator[0] == 1 && featureless_indicator[1] == 0 && featureless_indicator[2] == 0 && featureless_indicator[3] == 1) {
-		changeHeading_amount = 0;
-	} else if (featureless_indicator[1] == 0 && featureless_indicator[2] == 1) {
+	// if no features close left && close right -> rotate 180???
+	if (featureless_indicator[1] && featureless_indicator[2]) {
 		changeHeading_amount = 180;
+	}
+
+	// if no features close left -> big rotate to right
+	else if (featureless_indicator[1]) {
+		changeHeading_amount = changeHeading_Featureless_Close;
+	}
+
+	// if no features close right -> big rotate to left
+	else if (featureless_indicator[2]) {
+		changeHeading_amount = -changeHeading_Featureless_Close;
+	}
+
+	// if no features far left -> small rotate to right
+	else if (featureless_indicator[0]) {
+		changeHeading_amount = changeHeading_Featureless_Far;
+	}
+
+	// if no features far right -> small rotate to left
+	else if (featureless_indicator[3]) {
+		changeHeading_amount = -changeHeading_Featureless_Far;
 	}
 
 	return FALSE;
