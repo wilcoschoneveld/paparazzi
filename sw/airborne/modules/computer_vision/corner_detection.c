@@ -66,17 +66,17 @@ float yaw_rate;
 struct flow regions[4];
 
 // FILTER NOISE
-int threshold_noise = 50;
 float filter_previous_average_flow[4];
 float filter_previous_counter[4];
-float alpha = 0.5;
-float alpha_counter = 0.5;
+int threshold_noise = 50;
+float alpha         = 0.5;
+float alpha_counter = 0.75;
 
 // FIRST CONDITION: Check if the aircraft is turning
-float threshold_turning = 0.025;
-uint8_t TURNING = FALSE;
 float turning[MEMORY];
 int counter_turning;
+uint8_t TURNING         = FALSE;
+float threshold_turning = 0.015;
 
 void corner_detection_init(void)
 {
@@ -84,23 +84,18 @@ void corner_detection_init(void)
   image_create(&img_gray, IMG_WIDTH, IMG_HEIGHT, IMAGE_GRAYSCALE);
   image_create(&img_old, IMG_WIDTH, IMG_HEIGHT, IMAGE_GRAYSCALE);
 
-  // Initialize previous filter value
-  filter_previous_average_flow[0] = 0;
-  filter_previous_average_flow[1] = 0;
-  filter_previous_average_flow[2] = 0;
-  filter_previous_average_flow[3] = 0;
+  // Initialize previous variables
+  for (int i = 0; i <4 ; ++i) {
+    filter_previous_average_flow[i] = 0;
+    filter_previous_counter[i]      = 0;
+  }
 
-  filter_previous_counter[0] = 0;
-  filter_previous_counter[1] = 0;
-  filter_previous_counter[2] = 0;
-  filter_previous_counter[3] = 0;
+  for (int i = 0; i <(MEMORY-1) ; ++i) {
+    turning[i] = 0;
+  }
 
-  // Initialize the variables related with turning
+  // Initialize the boolean variable about turning
   TURNING = FALSE;
-  turning[0] = 0;
-  turning[1] = 0;
-  turning[2] = 0;
-  turning[3] = 0;
 
   // Add detection function to CV
   cv_add(corner_detection_func);
@@ -153,7 +148,7 @@ bool_t corner_detection_func(struct image_t* img)
   // Initialize regions
   for (int i = 0; i < 4; ++i) {
     regions[i].counter = 0;
-    regions[i].total = 0;
+    regions[i].total   = 0;
     regions[i].average = 0;
   }
 
@@ -174,7 +169,7 @@ bool_t corner_detection_func(struct image_t* img)
     int k = x * 4 / IMG_WIDTH;
 
     regions[k].counter += 1;
-    regions[k].total += abs(vectors[i].flow_x); // Not to sure about this??
+    regions[k].total   += abs(vectors[i].flow_x);
   }
 
   // Calculate average of flow regions
@@ -195,7 +190,7 @@ bool_t corner_detection_func(struct image_t* img)
   }
 
   // Update current values
-  turning[4] = yaw_rate;
+  turning[(MEMORY-1)] = yaw_rate;
 
   // Check turning
   counter_turning = 0;
@@ -204,11 +199,13 @@ bool_t corner_detection_func(struct image_t* img)
       counter_turning++;
     }
   }
+
   TURNING = 0;
   if (counter_turning > 0) {
     TURNING = 1;
     for (int i = 0; i <4 ; ++i) {
       regions[i].average = 0;
+      regions[i].counter = 0;
     }
   }
 
@@ -227,25 +224,18 @@ bool_t corner_detection_func(struct image_t* img)
   image_copy(&img_gray, &img_old);
 
   // Prepare variables for the next iteration
-  turning[0] = turning[1];
-  turning[1] = turning[2];
-  turning[2] = turning[3];
-  turning[3] = turning[4];
+  for (int i = 0; i <(MEMORY-1) ; ++i) {
+    turning[i] = turning[i+1];
+  }
 
-  // Copy flow values
-  filter_previous_average_flow[0] = regions[0].average;
-  filter_previous_average_flow[1] = regions[1].average;
-  filter_previous_average_flow[2] = regions[2].average;
-  filter_previous_average_flow[3] = regions[3].average;
-
-  filter_previous_counter[0] = regions[0].counter;
-  filter_previous_counter[1] = regions[1].counter;
-  filter_previous_counter[2] = regions[2].counter;
-  filter_previous_counter[3] = regions[3].counter;
+  for (int i = 0; i <4 ; ++i) {
+    filter_previous_average_flow[i] = regions[i].average;
+    filter_previous_counter[i]      = regions[i].counter;
+  }
 
   // Free memory
   free(features); features = NULL;
-  free(vectors); vectors = NULL;
+  free(vectors); vectors   = NULL;
 
   return TRUE;
 }

@@ -19,57 +19,48 @@
 #include "subsystems/datalink/telemetry.h"
 #include <math.h>
 
-int32_t incrementForAvoidance;
 int randomIncrement;
 
 // Change heading
 float changeHeading_amount = 0;
 
 // SECOND CONDITION: Check featureless regions
-//int threshold_feature_far = 3;
-//int threshold_feature_close = 5;
-
-int threshold_feature_far = 0;
-int threshold_feature_close = 5;
+int featureless_indicator[4];
 
 uint8_t FEATURELESS = FALSE;
-int featureless_indicator[4];
+
+int threshold_feature_far   = 3;
+int threshold_feature_close = 5;
 
 float changeHeading_Featureless_Far   = 20;
 float changeHeading_Featureless_Close = 90;
 
 // THIRD CONDITION: Check frontal obstacle
-float frontal_threshold_min = 10;
-float frontal_threshold_max = 50;
-float changeHeading_OF_Frontal = 180;
-float changeHeading_OF_Lateral = 90;
 uint8_t FRONTAL_OBSTACLE = FALSE;
 
+float frontal_threshold_min = 10;
+float frontal_threshold_max = 50;
+
+float changeHeading_OF_Frontal = 180;
+float changeHeading_OF_Lateral = 90;
+
 // FOURTH CONDITION: Check side obstacles
-float sideClose_threshold = 10;
-float sideFar_threshold   = 10;
-float changeHeading_OF_sideClose = 60;
-float changeHeading_OF_sideFar   = 30;
 uint8_t SIDE_OBSTACLE = FALSE;
 
-void obstacle_avoider_init() {
+float sideFar_threshold   = 10;
 
-	// Seed the random number generator with current time
-	srand(time(NULL));
-	chooseRandomIncrementAvoidance();
-}
+float changeHeading_OF_sideFar   = 15;
 
 void obstacle_avoider_periodic() {
 
 	// Initialize variables
-	FEATURELESS = FALSE;
+	FEATURELESS      = FALSE;
 	FRONTAL_OBSTACLE = FALSE;
-	SIDE_OBSTACLE = FALSE;
-	featureless_indicator[0] = 0;
-	featureless_indicator[1] = 0;
-	featureless_indicator[2] = 0;
-	featureless_indicator[3] = 0;
+	SIDE_OBSTACLE    = FALSE;
 
+	for (int j = 0; j <4 ; ++j) {
+		featureless_indicator[j] = 0;
+	}
 
 	if (TURNING ==0) {
 
@@ -77,7 +68,6 @@ void obstacle_avoider_periodic() {
 		for (int i = 0; i < 4; ++i) {
 			// Threshold is dependent on region location
 			float t = (i > 0 && i < 3) ? threshold_feature_close : threshold_feature_far;
-
 			// If counter is below threshold, set featureless
 			if (regions[i].counter < t) {
 				featureless_indicator[i] = 1;
@@ -100,17 +90,8 @@ void obstacle_avoider_periodic() {
 			}
 
 			if (FRONTAL_OBSTACLE == 0) {
-				// Check side obstacles
 
-				if (abs(regions[2].average - regions[1].average) > sideClose_threshold) {
-					SIDE_OBSTACLE = 1;
-					if (regions[2].average > regions[1].average) {
-						changeHeading_amount = -changeHeading_OF_sideClose;
-					} else {
-						changeHeading_amount = changeHeading_OF_sideClose;
-					}
-
-				} else if (abs(regions[3].average - regions[0].average) > sideFar_threshold) {
+				 if (abs(regions[3].average - regions[0].average) > sideFar_threshold) {
 					SIDE_OBSTACLE = 1;
 					if (regions[3].average > regions[0].average) {
 						changeHeading_amount = -changeHeading_OF_sideFar;
@@ -142,18 +123,6 @@ void obstacle_avoider_periodic() {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // FUNCTIONS USED IN THE FLIGHT PLAN
-
-/**
- * Increases the NAV heading. Assumes heading is an INT32_ANGLE. It is bound in this function.
- */
-
-uint8_t increase_nav_heading(int32_t *heading, int32_t increment)
-{
-	*heading = *heading + increment;
-	// Check if your turn made it go out of bounds...
-	INT32_ANGLE_NORMALIZE(*heading); // HEADING HAS INT32_ANGLE_FRAC....
-	return FALSE;
-}
 
 uint8_t moveWaypointForwards(uint8_t waypoint, float distanceMeters){
 	struct EnuCoor_i new_coor;
@@ -190,18 +159,6 @@ uint8_t moveWaypointAngle(uint8_t waypoint, float distanceMeters){
 	// Set the waypoint to the calculated position
 	waypoint_set_xy_i(waypoint, new_coor.x, new_coor.y);
 
-	return FALSE;
-}
-
-uint8_t chooseRandomIncrementAvoidance(){
-
-	int r = rand() % 2;
-	if(r==0){
-		incrementForAvoidance=350;
-	}
-	else{
-		incrementForAvoidance=-350;
-	}
 	return FALSE;
 }
 
