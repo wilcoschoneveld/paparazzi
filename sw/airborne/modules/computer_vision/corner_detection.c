@@ -90,12 +90,12 @@ void corner_detection_init(void)
     filter_previous_counter[i]      = 0;
   }
 
+  // Initialize turning variables
+  TURNING = FALSE;
+
   for (int i = 0; i <(MEMORY-1) ; ++i) {
     turning[i] = 0;
   }
-
-  // Initialize the boolean variable about turning
-  TURNING = FALSE;
 
   // Add detection function to CV
   cv_add(corner_detection_func);
@@ -142,9 +142,6 @@ bool_t corner_detection_func(struct image_t* img)
   if (lk_show_optical_flow)
     image_show_flow(img, vectors, feature_cnt, lk_subpixel_factor);
 
-  // Narrow the vertical window and only horizontal derotated flow
-  yaw_rate = stateGetBodyRates_f()->r;
-
   // Initialize regions
   for (int i = 0; i < 4; ++i) {
     regions[i].counter = 0;
@@ -163,6 +160,7 @@ bool_t corner_detection_func(struct image_t* img)
       continue;
 
     // De-rotate flow
+    yaw_rate = stateGetBodyRates_f()->r;
     vectors[i].flow_x -= (y - IMG_HEIGHT / 2) * yaw_rate;
 
     // Determine region

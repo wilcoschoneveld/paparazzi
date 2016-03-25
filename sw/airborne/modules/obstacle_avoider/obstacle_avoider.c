@@ -19,11 +19,6 @@
 #include "subsystems/datalink/telemetry.h"
 #include <math.h>
 
-int randomIncrement;
-
-// Change heading
-float changeHeading_amount = 0;
-
 // SECOND CONDITION: Check featureless regions
 int featureless_indicator[4];
 
@@ -38,8 +33,7 @@ float changeHeading_Featureless_Close = 90;
 // THIRD CONDITION: Check frontal obstacle
 uint8_t FRONTAL_OBSTACLE = FALSE;
 
-float frontal_threshold_min = 10;
-float frontal_threshold_max = 50;
+float frontal_threshold = 10;
 
 float changeHeading_OF_Frontal = 180;
 float changeHeading_OF_Lateral = 90;
@@ -50,6 +44,10 @@ uint8_t SIDE_OBSTACLE = FALSE;
 float sideFar_threshold   = 10;
 
 float changeHeading_OF_sideFar   = 15;
+
+// Change heading
+float changeHeading_amount = 0;
+int randomIncrement;
 
 void obstacle_avoider_periodic() {
 
@@ -64,10 +62,11 @@ void obstacle_avoider_periodic() {
 
 	if (TURNING ==0) {
 
-		// Loop through the regions
 		for (int i = 0; i < 4; ++i) {
+
 			// Threshold is dependent on region location
 			float t = (i > 0 && i < 3) ? threshold_feature_close : threshold_feature_far;
+
 			// If counter is below threshold, set featureless
 			if (regions[i].counter < t) {
 				featureless_indicator[i] = 1;
@@ -77,22 +76,26 @@ void obstacle_avoider_periodic() {
 
 		if (FEATURELESS == 0) {
 
-			if (regions[1].average > frontal_threshold_min && regions[1].average < frontal_threshold_max &&
-				regions[2].average > frontal_threshold_min && regions[2].average < frontal_threshold_max) {
+			// If flow is above threshold, set frontal obstacle
+			if (regions[1].average > frontal_threshold && regions[2].average > frontal_threshold) {
 				FRONTAL_OBSTACLE = 1;
 				changeHeading_amount = changeHeading_OF_Frontal;
-			} else if (regions[1].average > frontal_threshold_min && regions[1].average < frontal_threshold_max) {
+
+			} else if (regions[1].average > frontal_threshold) {
 				FRONTAL_OBSTACLE = 1;
 				changeHeading_amount = changeHeading_OF_Lateral;
-			} else if (regions[2].average > frontal_threshold_min && regions[2].average < frontal_threshold_max) {
+
+			} else if (regions[2].average > frontal_threshold) {
 				FRONTAL_OBSTACLE = 1;
 				changeHeading_amount = -changeHeading_OF_Lateral;
 			}
 
 			if (FRONTAL_OBSTACLE == 0) {
 
+				 // If the difference in flow is above threshold, set side obstacle
 				 if (abs(regions[3].average - regions[0].average) > sideFar_threshold) {
 					SIDE_OBSTACLE = 1;
+
 					if (regions[3].average > regions[0].average) {
 						changeHeading_amount = -changeHeading_OF_sideFar;
 					} else {
@@ -100,7 +103,6 @@ void obstacle_avoider_periodic() {
 					}
 				}
 			}
-
 		}
 	}
 
