@@ -23,7 +23,6 @@
  * @file modules/computer_vision/corner_detection.c
  */
 
-// Own header
 #include "modules/computer_vision/corner_detection.h"
 #include "lib/vision/fast_rosten.h"
 #include "lib/vision/lucas_kanade.h"
@@ -70,13 +69,13 @@ float filter_previous_average_flow[4];
 float filter_previous_counter[4];
 int threshold_noise = 50;
 float alpha         = 0.5;
-float alpha_counter = 0.75;
+float alpha_counter = 0.9;
 
 // FIRST CONDITION: Check if the aircraft is turning
 float turning[MEMORY];
 int counter_turning;
 uint8_t TURNING         = FALSE;
-float threshold_turning = 0.015;
+float threshold_turning = 0.005;
 
 void corner_detection_init(void)
 {
@@ -198,13 +197,18 @@ bool_t corner_detection_func(struct image_t* img)
     }
   }
 
-  TURNING = 0;
   if (counter_turning > 0) {
     TURNING = 1;
     for (int i = 0; i <4 ; ++i) {
       regions[i].average = 0;
-      regions[i].counter = 0;
+      if (i == 0 || i == 3) {
+        regions[i].counter = threshold_feature_far + 1;
+      } else {
+        regions[i].counter = threshold_feature_close + 1;
+      }
     }
+  } else {
+    TURNING = 0;
   }
 
   DOWNLINK_SEND_OPTICAL_FLOW(DefaultChannel,

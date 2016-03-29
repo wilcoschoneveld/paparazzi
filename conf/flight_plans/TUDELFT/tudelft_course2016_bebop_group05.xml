@@ -84,46 +84,56 @@
     <!-- ################################### -->
 
     <block key="g" name="MoveGoalForward" strip_button="Go" strip_icon="flat_theme/observe.png">
-      <call fun="moveWaypointForwards(WP_GOAL, 1)"/>
+      <call fun="moveWaypointForwards(WP_GOAL, 1.25)"/>
       <deroute block="GoGoal"/>
     </block>
 
     <block name="GoGoal">
       <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="OutsideGoal"/>
       <exception cond="FEATURELESS > 0" deroute="Featureless"/>
-      <exception cond="FRONTAL_OBSTACLE > 0" deroute="AngleGoal"/>
-      <exception cond="SIDE_OBSTACLE > 0" deroute="AngleGoal"/>
+      <exception cond="FRONTAL_OBSTACLE > 0" deroute="Frontal"/>
+      <!--<exception cond="SIDE_OBSTACLE > 0" deroute="Side"/>-->
       <go wp="GOAL"/>
       <deroute block="MoveGoalForward"/>
     </block>
 
     <block name="Featureless">
       <call fun="changeHeading_Featureless()"/>
-      <deroute block="AngleGoal"/>
-    </block>
-
-    <block name="OutsideGoal">
-      <call fun="changeHeading_Outside()"/>
-      <deroute block="AngleGoal"/>
-    </block>
-
-    <!--TIMERS NEED TO BE TUNED-->
-    <block name="AngleGoal">
       <call fun="NavSetWaypointHere(WP_GOAL)"/>
       <stay wp="GOAL" until="stage_time > 1"/>
-      <call fun="nav_set_heading_deg(changeHeading_amount)"/>
-      <while cond="LessThan(NavBlockTime(), 5)"/>
+      <call fun="moveWaypointAngle(WP_GOAL, 1.25, changeHeading_amount_Featureless)"/>
+      <call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>
+      <while cond="LessThan(NavBlockTime(), 3)"/>
       <deroute block="MoveGoalForward"/>
     </block>
 
-    <!--<block name="AngleGoal">-->
+    <block name="Frontal">
+      <call fun="NavSetWaypointHere(WP_GOAL)"/>
+      <stay wp="GOAL" until="stage_time > 1"/>
+      <call fun="moveWaypointAngle(WP_GOAL, 1.25, changeHeading_amount_Frontal)"/>
+      <call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>
+      <while cond="LessThan(NavBlockTime(), 3)"/>
+      <deroute block="MoveGoalForward"/>
+    </block>
+
+    <!--<block name="Side">-->
       <!--<call fun="NavSetWaypointHere(WP_GOAL)"/>-->
-      <!--<stay wp="GOAL" until="stage_time > 0.75"/>-->
-      <!--<call fun="moveWaypointAngle(WP_GOAL, 1.25)"/>-->
+      <!--<stay wp="GOAL" until="stage_time > 1"/>-->
+      <!--<call fun="moveWaypointAngle(WP_GOAL, 1.25, changeHeading_amount_Side)"/>-->
       <!--<call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>-->
-      <!--<while cond="LessThan(NavBlockTime(), 3)"/>-->
-      <!--<deroute block="GoGoal"/>-->
+      <!--<while cond="LessThan(NavBlockTime(), 5)"/>-->
+      <!--<deroute block="MoveGoalForward"/>-->
     <!--</block>-->
+
+    <block name="OutsideGoal">
+      <call fun="changeHeading_Outside()"/>
+      <call fun="NavSetWaypointHere(WP_GOAL)"/>
+      <stay wp="GOAL" until="stage_time > 1"/>
+      <call fun="moveWaypointAngle(WP_GOAL, 1.25, changeHeading_amount_Outside)"/>
+      <call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>
+      <while cond="LessThan(NavBlockTime(), 5)"/>
+      <deroute block="MoveGoalForward"/>
+    </block>
 
     <!-- ################################### -->
 
