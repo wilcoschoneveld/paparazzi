@@ -56,7 +56,7 @@ int counter_counter_RC;
 // THIRD CONDITION: Check frontal obstacle
 uint8_t FRONTAL_OBSTACLE = FALSE;
 
-float frontal_threshold = 9.5;
+float frontal_threshold = 10;
 
 float average_flow_LC[MEMORY_FRONTAL];
 float average_flow_RC[MEMORY_FRONTAL];
@@ -125,28 +125,13 @@ void obstacle_avoider_periodic() {
 			}
 		}
 
-		if (counter_counter_LC > 1) {
+		if (counter_counter_LC > 0) {
 			featureless_indicator[1] = 1;
 			FEATURELESS = 1;
-		}
-
-		if (counter_counter_RC > 1) {
+		}else if (counter_counter_RC > 0) {
 			featureless_indicator[2] = 1;
 			FEATURELESS = 1;
 		}
-
-
-//		for (int i = 0; i < 4; ++i) {
-//
-//			// Threshold is dependent on region location
-//			float t = (i > 0 && i < 3) ? threshold_feature_close : threshold_feature_far;
-//
-//			// If counter is below threshold, set featureless
-//			if (regions[i].counter < t) {
-//				featureless_indicator[i] = 1;
-//				FEATURELESS = 1;
-//			}
-//		}
 
 		if (FEATURELESS == 0) {
 
@@ -173,20 +158,6 @@ void obstacle_avoider_periodic() {
 				FRONTAL_OBSTACLE = 1;
 				changeHeading_amount_Frontal = -changeHeading_OF_Lateral;
 			}
-
-//			if (FRONTAL_OBSTACLE == 0) {
-//
-//				 // If the difference in flow is above threshold, set side obstacle
-//				 if (abs(regions[3].average - regions[0].average) > sideFar_threshold) {
-//					SIDE_OBSTACLE = 1;
-//
-//					if (regions[3].average > regions[0].average) {
-//						changeHeading_amount_Side = -changeHeading_OF_sideFar;
-//					} else {
-//						changeHeading_amount_Side = changeHeading_OF_sideFar;
-//					}
-//				}
-//			}
 		}
 	}
 
@@ -211,8 +182,8 @@ void obstacle_avoider_periodic() {
 								   &regions[1].counter,
 								   &regions[2].counter,
 								   &regions[3].counter,
-								   &counter_counter_LC,
-								   &counter_counter_RC);
+								   &counter_flow_LC,
+								   &counter_flow_RC);
 
 }
 
@@ -292,6 +263,13 @@ uint8_t changeHeading_Featureless() {
 uint8_t changeHeading_Outside(){
 
 	int r = rand() % 20;
-	changeHeading_amount_Outside = 80 + r;
+	int r2 = rand() % 2;
+	if(r2==0){
+		changeHeading_amount_Outside = (80 + r);
+	}
+	else{
+		changeHeading_amount_Outside = -(80 + r);
+	}
+
 	return FALSE;
 }
