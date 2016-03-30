@@ -912,6 +912,8 @@
      <field name="cnt_average_LC" type="float" />
      <field name="cnt_average_RC" type="float" />
      <field name="cnt_average_RF" type="float" />
+     <field name="cnt_LC" type="int32" />
+     <field name="cnt_RC" type="int32" />
    </message>
 
   <message name="MLX_SERIAL" id="113">

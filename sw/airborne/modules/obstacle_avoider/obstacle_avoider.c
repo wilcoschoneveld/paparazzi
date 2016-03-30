@@ -42,15 +42,21 @@ int featureless_indicator[4];
 uint8_t FEATURELESS = FALSE;
 
 float threshold_feature_far   = 0; // NOT USED
-float threshold_feature_close = 4.1;
+float threshold_feature_close = 5;
 
 float changeHeading_Featureless_Far   = 20; // NOT USED
 float changeHeading_Featureless_Close = 120;
 
+float counter_LC[MEMORY_FRONTAL];
+float counter_RC[MEMORY_FRONTAL];
+
+int counter_counter_LC;
+int counter_counter_RC;
+
 // THIRD CONDITION: Check frontal obstacle
 uint8_t FRONTAL_OBSTACLE = FALSE;
 
-float frontal_threshold = 8;
+float frontal_threshold = 9.5;
 
 float average_flow_LC[MEMORY_FRONTAL];
 float average_flow_RC[MEMORY_FRONTAL];
@@ -79,6 +85,8 @@ void obstacle_avoider_init() {
 	for (int i = 0; i <(MEMORY_FRONTAL-1); ++i) {
 		average_flow_LC[i] = 0;
 		average_flow_RC[i] = 0;
+		counter_LC[i] = 0;
+		counter_RC[i] = 0;
 	}
 }
 
@@ -89,8 +97,17 @@ void obstacle_avoider_periodic() {
 	FRONTAL_OBSTACLE = FALSE;
 	SIDE_OBSTACLE    = FALSE;
 
-	average_flow_LC[2] = regions[1].average;
-	average_flow_RC[2] = regions[2].average;
+	average_flow_LC[MEMORY_FRONTAL-1] = regions[1].average;
+	average_flow_RC[MEMORY_FRONTAL-1] = regions[2].average;
+
+	counter_LC[MEMORY_FRONTAL-1] = regions[1].counter;
+	counter_RC[MEMORY_FRONTAL-1] = regions[2].counter;
+
+	// Re-initialize counters
+	counter_flow_LC = 0;
+	counter_flow_RC = 0;
+	counter_counter_LC = 0;
+	counter_counter_RC = 0;
 
 	for (int j = 0; j <4; ++j) {
 		featureless_indicator[j] = 0;
@@ -98,24 +115,42 @@ void obstacle_avoider_periodic() {
 
 	if (TURNING ==0) {
 
-		for (int i = 0; i < 4; ++i) {
-
-			// Threshold is dependent on region location
-			float t = (i > 0 && i < 3) ? threshold_feature_close : threshold_feature_far;
-
-			// If counter is below threshold, set featureless
-			if (regions[i].counter < t) {
-				featureless_indicator[i] = 1;
-				FEATURELESS = 1;
+		// Check featureless
+		for (int i = 0; i <(MEMORY_FRONTAL); ++i) {
+			if (counter_LC[i] < threshold_feature_close) {
+				counter_counter_LC++;
+			}
+			if (counter_RC[i] < threshold_feature_close) {
+				counter_counter_RC++;
 			}
 		}
+
+		if (counter_counter_LC > 1) {
+			featureless_indicator[1] = 1;
+			FEATURELESS = 1;
+		}
+
+		if (counter_counter_RC > 1) {
+			featureless_indicator[2] = 1;
+			FEATURELESS = 1;
+		}
+
+
+//		for (int i = 0; i < 4; ++i) {
+//
+//			// Threshold is dependent on region location
+//			float t = (i > 0 && i < 3) ? threshold_feature_close : threshold_feature_far;
+//
+//			// If counter is below threshold, set featureless
+//			if (regions[i].counter < t) {
+//				featureless_indicator[i] = 1;
+//				FEATURELESS = 1;
+//			}
+//		}
 
 		if (FEATURELESS == 0) {
 
 			// If flow is above threshold, increase the counters
-			counter_flow_LC = 0;
-			counter_flow_RC = 0;
-
 			for (int i = 0; i <(MEMORY_FRONTAL); ++i) {
 				if (average_flow_LC[i] > frontal_threshold) {
 					counter_flow_LC++;
@@ -159,6 +194,8 @@ void obstacle_avoider_periodic() {
 	for (int i = 0; i <(MEMORY_FRONTAL-1) ; ++i) {
 		average_flow_LC[i] = average_flow_LC[i+1];
 		average_flow_RC[i] = average_flow_RC[i+1];
+		counter_LC[i] = counter_LC[i+1];
+		counter_RC[i] = counter_RC[i+1];
 	}
 
 	DOWNLINK_SEND_OBJECT_DETECTION(DefaultChannel, DefaultDevice,
@@ -173,7 +210,9 @@ void obstacle_avoider_periodic() {
 								   &regions[0].counter,
 								   &regions[1].counter,
 								   &regions[2].counter,
-								   &regions[3].counter);
+								   &regions[3].counter,
+								   &counter_counter_LC,
+								   &counter_counter_RC);
 
 }
 

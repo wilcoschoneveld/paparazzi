@@ -78,7 +78,7 @@ float turning[MEMORY];
 
 uint8_t TURNING = FALSE;
 
-float threshold_turning = 0.005;
+float threshold_turning = 0.01;
 
 int counter_turning;
 
@@ -207,9 +207,9 @@ bool_t corner_detection_func(struct image_t* img)
     for (int i = 0; i <4 ; ++i) {
       regions[i].average = 0;
       if (i == 0 || i == 3) {
-        regions[i].counter = threshold_feature_far + 1;
+        regions[i].counter = threshold_feature_far;
       } else {
-        regions[i].counter = threshold_feature_close + 1;
+        regions[i].counter = threshold_feature_close;
       }
     }
   } else {
