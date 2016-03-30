@@ -8,7 +8,7 @@
   <header>
     <file name="obstacle_avoider.h"/>
   </header>
-
+  <init fun="obstacle_avoider_init()"/>
   <periodic fun="obstacle_avoider_periodic()" freq="4"/>
 
   <makefile>

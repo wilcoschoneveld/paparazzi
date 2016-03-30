@@ -16,7 +16,7 @@
 extern float threshold_feature_far;
 extern float threshold_feature_close;
 
-extern int randomIncrement;
+extern void obstacle_avoider_init(void);
 extern void obstacle_avoider_periodic(void);
 extern uint8_t moveWaypointForwards(uint8_t waypoint, float distanceMeters);
 extern uint8_t moveWaypointAngle(uint8_t waypoint, float distanceMeters, float angle);

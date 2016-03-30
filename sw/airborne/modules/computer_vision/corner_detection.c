@@ -67,15 +67,20 @@ struct flow regions[4];
 // FILTER NOISE
 float filter_previous_average_flow[4];
 float filter_previous_counter[4];
-int threshold_noise = 50;
+
 float alpha         = 0.5;
 float alpha_counter = 0.9;
 
+int threshold_noise = 25;
+
 // FIRST CONDITION: Check if the aircraft is turning
 float turning[MEMORY];
-int counter_turning;
-uint8_t TURNING         = FALSE;
+
+uint8_t TURNING = FALSE;
+
 float threshold_turning = 0.005;
+
+int counter_turning;
 
 void corner_detection_init(void)
 {
@@ -92,7 +97,7 @@ void corner_detection_init(void)
   // Initialize turning variables
   TURNING = FALSE;
 
-  for (int i = 0; i <(MEMORY-1) ; ++i) {
+  for (int i = 0; i <(MEMORY-1); ++i) {
     turning[i] = 0;
   }
 
@@ -178,7 +183,7 @@ bool_t corner_detection_func(struct image_t* img)
 
     // If the average is higher than the threshold, then we do not use it
     if (regions[i].average > threshold_noise) {
-      regions[i].average = threshold_noise;
+      regions[i].average = filter_previous_average_flow[i];
     }
 
     // Filters

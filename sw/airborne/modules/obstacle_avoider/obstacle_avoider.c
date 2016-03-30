@@ -34,38 +34,53 @@
 #include "subsystems/datalink/telemetry.h"
 #include <math.h>
 
+#define MEMORY_FRONTAL 3
+
 // SECOND CONDITION: Check featureless regions
 int featureless_indicator[4];
 
 uint8_t FEATURELESS = FALSE;
 
-float threshold_feature_far   = 0;
+float threshold_feature_far   = 0; // NOT USED
 float threshold_feature_close = 4.1;
 
-float changeHeading_Featureless_Far   = 20;
+float changeHeading_Featureless_Far   = 20; // NOT USED
 float changeHeading_Featureless_Close = 120;
 
 // THIRD CONDITION: Check frontal obstacle
 uint8_t FRONTAL_OBSTACLE = FALSE;
 
-float frontal_threshold = 10;
+float frontal_threshold = 8;
+
+float average_flow_LC[MEMORY_FRONTAL];
+float average_flow_RC[MEMORY_FRONTAL];
+
+int counter_flow_LC;
+int counter_flow_RC;
 
 float changeHeading_OF_Frontal = 180;
 float changeHeading_OF_Lateral = 90;
 
 // FOURTH CONDITION: Check side obstacles
-uint8_t SIDE_OBSTACLE = FALSE;
+uint8_t SIDE_OBSTACLE = FALSE; // NOT USED
 
-float sideFar_threshold   = 10;
-
-float changeHeading_OF_sideFar   = 15;
+float sideFar_threshold = 10; // NOT USED
+float changeHeading_OF_sideFar = 15; // NOT USED
 
 // Change heading
 float changeHeading_amount_Outside     = 0;
 float changeHeading_amount_Featureless = 0;
 float changeHeading_amount_Frontal     = 0;
 float changeHeading_amount_Side        = 0;
-int randomIncrement;
+
+void obstacle_avoider_init() {
+
+	// Initialize variables
+	for (int i = 0; i <(MEMORY_FRONTAL-1); ++i) {
+		average_flow_LC[i] = 0;
+		average_flow_RC[i] = 0;
+	}
+}
 
 void obstacle_avoider_periodic() {
 
@@ -74,7 +89,10 @@ void obstacle_avoider_periodic() {
 	FRONTAL_OBSTACLE = FALSE;
 	SIDE_OBSTACLE    = FALSE;
 
-	for (int j = 0; j <4 ; ++j) {
+	average_flow_LC[2] = regions[1].average;
+	average_flow_RC[2] = regions[2].average;
+
+	for (int j = 0; j <4; ++j) {
 		featureless_indicator[j] = 0;
 	}
 
@@ -94,16 +112,29 @@ void obstacle_avoider_periodic() {
 
 		if (FEATURELESS == 0) {
 
-			// If flow is above threshold, set frontal obstacle
-			if (regions[1].average > frontal_threshold && regions[2].average > frontal_threshold) {
+			// If flow is above threshold, increase the counters
+			counter_flow_LC = 0;
+			counter_flow_RC = 0;
+
+			for (int i = 0; i <(MEMORY_FRONTAL); ++i) {
+				if (average_flow_LC[i] > frontal_threshold) {
+					counter_flow_LC++;
+				}
+				if (average_flow_RC[i] > frontal_threshold) {
+					counter_flow_RC++;
+				}
+			}
+
+			// If counters are above threshold, set frontal obstacle
+			if (counter_flow_LC > (MEMORY_FRONTAL-1) && counter_flow_RC > (MEMORY_FRONTAL-1)) {
 				FRONTAL_OBSTACLE = 1;
 				changeHeading_amount_Frontal = changeHeading_OF_Frontal;
 
-			} else if (regions[1].average > frontal_threshold) {
+			} else if (counter_flow_LC > (MEMORY_FRONTAL-1)) {
 				FRONTAL_OBSTACLE = 1;
 				changeHeading_amount_Frontal = changeHeading_OF_Lateral;
 
-			} else if (regions[2].average > frontal_threshold) {
+			} else if (counter_flow_RC > (MEMORY_FRONTAL-1)) {
 				FRONTAL_OBSTACLE = 1;
 				changeHeading_amount_Frontal = -changeHeading_OF_Lateral;
 			}
@@ -124,6 +155,11 @@ void obstacle_avoider_periodic() {
 		}
 	}
 
+	// Prepare variables for the next iteration
+	for (int i = 0; i <(MEMORY_FRONTAL-1) ; ++i) {
+		average_flow_LC[i] = average_flow_LC[i+1];
+		average_flow_RC[i] = average_flow_RC[i+1];
+	}
 
 	DOWNLINK_SEND_OBJECT_DETECTION(DefaultChannel, DefaultDevice,
 								   &TURNING,

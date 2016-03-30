@@ -100,7 +100,7 @@
     <block name="Featureless">
       <call fun="changeHeading_Featureless()"/>
       <call fun="NavSetWaypointHere(WP_GOAL)"/>
-      <stay wp="GOAL" until="stage_time > 1"/>
+      <stay wp="GOAL" until="stage_time > 0.5"/>
       <call fun="moveWaypointAngle(WP_GOAL, 1.25, changeHeading_amount_Featureless)"/>
       <call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>
       <while cond="LessThan(NavBlockTime(), 3)"/>
@@ -109,7 +109,7 @@
 
     <block name="Frontal">
       <call fun="NavSetWaypointHere(WP_GOAL)"/>
-      <stay wp="GOAL" until="stage_time > 1"/>
+      <stay wp="GOAL" until="stage_time > 0.5"/>
       <call fun="moveWaypointAngle(WP_GOAL, 1.25, changeHeading_amount_Frontal)"/>
       <call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>
       <while cond="LessThan(NavBlockTime(), 3)"/>
