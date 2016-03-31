@@ -57,7 +57,7 @@ int counter_counter_RC;
 // THIRD CONDITION: Check frontal obstacle
 uint8_t FRONTAL_OBSTACLE = FALSE;
 
-float frontal_threshold = 8;
+float frontal_threshold = 9.5;
 
 float average_flow_LC[MEMORY_FRONTAL];
 float average_flow_RC[MEMORY_FRONTAL];
