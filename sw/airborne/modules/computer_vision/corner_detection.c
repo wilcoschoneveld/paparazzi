@@ -34,7 +34,7 @@
 #define IMG_WIDTH 272
 #define IMG_HEIGHT 272
 
-#define MEMORY 5
+#define MEMORY 4
 
 // FAST SETTINGS
 bool_t fast_show_features = FALSE;

@@ -34,7 +34,8 @@
 #include "subsystems/datalink/telemetry.h"
 #include <math.h>
 
-#define MEMORY_FRONTAL 3
+#define MEMORY_FRONTAL 4
+#define MEMORY_FEATURELESS 2
 
 // SECOND CONDITION: Check featureless regions
 int featureless_indicator[4];
@@ -47,8 +48,8 @@ float threshold_feature_close = 5;
 float changeHeading_Featureless_Far   = 20; // NOT USED
 float changeHeading_Featureless_Close = 120;
 
-float counter_LC[MEMORY_FRONTAL];
-float counter_RC[MEMORY_FRONTAL];
+float counter_LC[MEMORY_FEATURELESS];
+float counter_RC[MEMORY_FEATURELESS];
 
 int counter_counter_LC;
 int counter_counter_RC;
@@ -56,7 +57,7 @@ int counter_counter_RC;
 // THIRD CONDITION: Check frontal obstacle
 uint8_t FRONTAL_OBSTACLE = FALSE;
 
-float frontal_threshold = 10;
+float frontal_threshold = 8;
 
 float average_flow_LC[MEMORY_FRONTAL];
 float average_flow_RC[MEMORY_FRONTAL];
@@ -65,7 +66,7 @@ int counter_flow_LC;
 int counter_flow_RC;
 
 float changeHeading_OF_Frontal = 180;
-float changeHeading_OF_Lateral = 90;
+float changeHeading_OF_Lateral = 120;
 
 // FOURTH CONDITION: Check side obstacles
 uint8_t SIDE_OBSTACLE = FALSE; // NOT USED
@@ -85,6 +86,9 @@ void obstacle_avoider_init() {
 	for (int i = 0; i <(MEMORY_FRONTAL-1); ++i) {
 		average_flow_LC[i] = 0;
 		average_flow_RC[i] = 0;
+	}
+
+	for (int i = 0; i <(MEMORY_FEATURELESS-1); ++i) {
 		counter_LC[i] = 0;
 		counter_RC[i] = 0;
 	}
@@ -96,12 +100,6 @@ void obstacle_avoider_periodic() {
 	FEATURELESS      = FALSE;
 	FRONTAL_OBSTACLE = FALSE;
 	SIDE_OBSTACLE    = FALSE;
-
-	average_flow_LC[MEMORY_FRONTAL-1] = regions[1].average;
-	average_flow_RC[MEMORY_FRONTAL-1] = regions[2].average;
-
-	counter_LC[MEMORY_FRONTAL-1] = regions[1].counter;
-	counter_RC[MEMORY_FRONTAL-1] = regions[2].counter;
 
 	// Re-initialize counters
 	counter_flow_LC = 0;
@@ -115,8 +113,11 @@ void obstacle_avoider_periodic() {
 
 	if (TURNING ==0) {
 
+		counter_LC[MEMORY_FEATURELESS-1] = regions[1].counter;
+		counter_RC[MEMORY_FEATURELESS-1] = regions[2].counter;
+
 		// Check featureless
-		for (int i = 0; i <(MEMORY_FRONTAL); ++i) {
+		for (int i = 0; i <(MEMORY_FEATURELESS); ++i) {
 			if (counter_LC[i] < threshold_feature_close) {
 				counter_counter_LC++;
 			}
@@ -125,15 +126,18 @@ void obstacle_avoider_periodic() {
 			}
 		}
 
-		if (counter_counter_LC > 0) {
+		if (counter_counter_LC == MEMORY_FEATURELESS) {
 			featureless_indicator[1] = 1;
 			FEATURELESS = 1;
-		}else if (counter_counter_RC > 0) {
+		} else if (counter_counter_RC == MEMORY_FEATURELESS) {
 			featureless_indicator[2] = 1;
 			FEATURELESS = 1;
 		}
 
 		if (FEATURELESS == 0) {
+
+			average_flow_LC[MEMORY_FRONTAL-1] = regions[1].average;
+			average_flow_RC[MEMORY_FRONTAL-1] = regions[2].average;
 
 			// If flow is above threshold, increase the counters
 			for (int i = 0; i <(MEMORY_FRONTAL); ++i) {
@@ -159,15 +163,32 @@ void obstacle_avoider_periodic() {
 				changeHeading_amount_Frontal = -changeHeading_OF_Lateral;
 			}
 		}
+
+		// Prepare variables for the next iteration
+		for (int i = 0; i <(MEMORY_FRONTAL-1) ; ++i) {
+			average_flow_LC[i] = average_flow_LC[i+1];
+			average_flow_RC[i] = average_flow_RC[i+1];
+		}
+
+		for (int i = 0; i <(MEMORY_FEATURELESS-1) ; ++i) {
+			counter_LC[i] = counter_LC[i+1];
+			counter_RC[i] = counter_RC[i+1];
+		}
+
+	} else {
+
+		for (int i = 0; i < (MEMORY_FRONTAL); ++i) {
+			average_flow_LC[i] = 0;
+			average_flow_RC[i] = 0;
+		}
+
+		for (int i = 0; i < (MEMORY_FEATURELESS); ++i) {
+			counter_LC[i] = 0;
+			counter_RC[i] = 0;
+		}
 	}
 
-	// Prepare variables for the next iteration
-	for (int i = 0; i <(MEMORY_FRONTAL-1) ; ++i) {
-		average_flow_LC[i] = average_flow_LC[i+1];
-		average_flow_RC[i] = average_flow_RC[i+1];
-		counter_LC[i] = counter_LC[i+1];
-		counter_RC[i] = counter_RC[i+1];
-	}
+
 
 	DOWNLINK_SEND_OBJECT_DETECTION(DefaultChannel, DefaultDevice,
 								   &TURNING,
@@ -263,13 +284,7 @@ uint8_t changeHeading_Featureless() {
 uint8_t changeHeading_Outside(){
 
 	int r = rand() % 20;
-	int r2 = rand() % 2;
-	if(r2==0){
-		changeHeading_amount_Outside = (80 + r);
-	}
-	else{
-		changeHeading_amount_Outside = -(80 + r);
-	}
+	changeHeading_amount_Outside = (80 + r);
 
 	return FALSE;
 }

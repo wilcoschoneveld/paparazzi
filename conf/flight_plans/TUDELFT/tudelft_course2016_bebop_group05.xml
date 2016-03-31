@@ -92,47 +92,38 @@
       <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="OutsideGoal"/>
       <exception cond="FEATURELESS > 0" deroute="Featureless"/>
       <exception cond="FRONTAL_OBSTACLE > 0" deroute="Frontal"/>
-      <!--<exception cond="SIDE_OBSTACLE > 0" deroute="Side"/>-->
+      <exception cond="MoreThan(NavBlockTime(), 1)" deroute="MoveGoalForward"/>
       <go wp="GOAL"/>
       <deroute block="MoveGoalForward"/>
     </block>
 
     <block name="Featureless">
+      <exception cond="MoreThan(NavBlockTime(), 3.5) && !TURNING" deroute="MoveGoalForward"/>
       <call fun="changeHeading_Featureless()"/>
       <call fun="NavSetWaypointHere(WP_GOAL)"/>
       <stay wp="GOAL" until="stage_time > 1"/>
       <call fun="moveWaypointAngle(WP_GOAL, 1.25, changeHeading_amount_Featureless)"/>
       <call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>
-      <while cond="LessThan(NavBlockTime(), 3.5)"/>
-      <deroute block="MoveGoalForward"/>
+      <while cond="LessThan(NavBlockTime(), 10)"/>
     </block>
 
     <block name="Frontal">
+      <exception cond="MoreThan(NavBlockTime(), 3.5) && !TURNING" deroute="MoveGoalForward"/>
       <call fun="NavSetWaypointHere(WP_GOAL)"/>
       <stay wp="GOAL" until="stage_time > 1"/>
       <call fun="moveWaypointAngle(WP_GOAL, 1.25, changeHeading_amount_Frontal)"/>
       <call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>
-      <while cond="LessThan(NavBlockTime(), 3.5)"/>
-      <deroute block="MoveGoalForward"/>
+      <while cond="LessThan(NavBlockTime(), 10)"/>
     </block>
 
-    <!--<block name="Side">-->
-      <!--<call fun="NavSetWaypointHere(WP_GOAL)"/>-->
-      <!--<stay wp="GOAL" until="stage_time > 1"/>-->
-      <!--<call fun="moveWaypointAngle(WP_GOAL, 1.25, changeHeading_amount_Side)"/>-->
-      <!--<call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>-->
-      <!--<while cond="LessThan(NavBlockTime(), 5)"/>-->
-      <!--<deroute block="MoveGoalForward"/>-->
-    <!--</block>-->
-
     <block name="OutsideGoal">
+      <exception cond="MoreThan(NavBlockTime(), 3.5) && !TURNING" deroute="MoveGoalForward"/>
       <call fun="changeHeading_Outside()"/>
       <call fun="NavSetWaypointHere(WP_GOAL)"/>
       <stay wp="GOAL" until="stage_time > 1"/>
       <call fun="moveWaypointAngle(WP_GOAL, 1.25, changeHeading_amount_Outside)"/>
       <call fun="nav_set_heading_towards_waypoint(WP_GOAL)"/>
-      <while cond="LessThan(NavBlockTime(), 5)"/>
-      <deroute block="MoveGoalForward"/>
+      <while cond="LessThan(NavBlockTime(), 10)"/>
     </block>
 
     <!-- ################################### -->
