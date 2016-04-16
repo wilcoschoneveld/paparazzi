@@ -89,7 +89,7 @@
     </block>
 
     <block name="GoGoal">
-      <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="OutsideGoal"/>
+      <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="OutsideOZ"/>
       <exception cond="FEATURELESS > 0" deroute="Featureless"/>
       <exception cond="FRONTAL_OBSTACLE > 0" deroute="Frontal"/>
       <exception cond="MoreThan(NavBlockTime(), 1)" deroute="MoveGoalForward"/>
@@ -116,7 +116,7 @@
       <while cond="LessThan(NavBlockTime(), 10)"/>
     </block>
 
-    <block name="OutsideGoal">
+    <block name="OutsideOZ">
       <exception cond="MoreThan(NavBlockTime(), 3.5) && !TURNING" deroute="MoveGoalForward"/>
       <call fun="changeHeading_Outside()"/>
       <call fun="NavSetWaypointHere(WP_GOAL)"/>
