@@ -34,8 +34,10 @@ def get_module_dir(module):
 def modules_category_list(category, modules):
     s = "@subsection modules_category_" + category.lower() + " " + category.title() + " modules\n\n"
     for (fname, m) in sorted(modules.items()):
-        page_name = "module__" + fname[:-4].lower()
-        s += "- " + fname + " @subpage " + page_name + "\n"
+        mname = fname[:-4].lower()
+        page_name = "module__" + mname
+        (brief, _) = get_module_description(m)
+        s += "- @subpage {} : {}\n".format(page_name, brief)
     return s + "\n\n"
 
 
@@ -77,11 +79,14 @@ def module_page(filename, module):
     (brief, details) = get_module_description(module)
     mname = filename[:-4].lower()
     page_name = "module__" + mname
-    s = dox_new_page(page_name, brief)
-    s += "Module XML file: @c " + filename + "\n\n"
+    title = mname + " module"
+    s = dox_new_page(page_name, title)
+    s += "<b>" + brief + "</b>\n\n"
     s += details + "\n"
     s += get_xml_example(filename, module)
     s += module_configuration(module, mname)
+    s += module_autoloads(module, mname)
+    s += module_depends_conflicts(module, mname)
     s += module_functions(module, mname)
     s += module_datalink(module, mname)
     s += "@section files Files\n\n"
@@ -93,23 +98,25 @@ def module_page(filename, module):
 
 
 def get_xml_example(filename, module):
+    module_name = filename[:-4]
     opts = module.findall(".doc/define") + module.findall(".doc/configure")
-    s = "\n@section module_load_example__{0} Example for airframe file\n".format(filename[:-4].lower())
+    s = "\n@section module_load_example__{0} Example for airframe file\n".format(module_name.lower())
+    s += "Add to your firmware section:\n"
     if opts:
         s += "This example contains all possible configuration options, not all of them are mandatory!\n"
     s += "@code{.xml}\n"
-    s += "<modules>\n"
+    for d in get_module_dependencies(module):
+        s += '<module name="{0}"/>\n'.format(d)
     if opts:
-        s += '  <load name="{0}">\n'.format(filename)
+        s += '<module name="{0}">\n'.format(module_name)
         for o in opts:
             e = copy.deepcopy(o)
             if 'description' in e.attrib:
                 del e.attrib['description']
-            s += "    " + string.strip(ET.tostring(e)) + "\n"
-        s += "  </load>\n"
+            s += "  " + string.strip(ET.tostring(e)) + "\n"
+        s += "</module>\n"
     else:
-        s += '  <load name="{0}"/>\n'.format(filename)
-    s += "</modules>\n"
+        s += '<module name="{0}"/>\n'.format(module_name)
     s += "@endcode\n"
     return s
 
@@ -169,8 +176,55 @@ def module_configuration(module, mname):
     else:
         return ""
 
+
+def module_depends_conflicts(module, mname):
+    s = ""
+    deps = get_module_dependencies(module)
+    if deps:
+        s += "@section dependencies__{} Dependencies\n".format(mname)
+        for d in deps:
+            s += "- @ref module__{}\n".format(d.lower())
+    conflicts = get_module_conflicts(module)
+    if conflicts:
+        s += "@section conflicts__{} Conflicts\n".format(mname)
+        for c in conflicts:
+            s += "- @ref module__{}\n".format(c.lower())
+    return s
+
+
+def get_module_dependencies(module):
+    deps = module.find(".depends")
+    deps = deps.text.split(',') if deps is not None else []
+    return [d.strip() for d in deps]
+
+
+def get_module_conflicts(module):
+    conflicts = module.find(".conflicts")
+    conflicts = conflicts.text.split(',') if conflicts is not None else []
+    return [c.strip() for c in conflicts]
+
+
+def module_autoloads(module, mname):
+    s = ""
+    autos = get_module_autoloads(module)
+    if autos:
+        s += "@section autoloads__{} Auto-loaded modules\n".format(mname)
+        s += "The following modules are automatically loaded (just as if you had added them in the airframe file)\n"
+        for a in autos:
+            s += "- @ref module__{}\n".format(a.lower())
+    return s
+
+
+def get_module_autoloads(module):
+    autoloads = module.findall(".autoload")
+    def module_name(m):
+        return (m.get('name') + m.get('type', '')).strip()
+    return [module_name(a) for a in autoloads]
+
+
 def get_module_name(module):
     return module.get('name')
+
 
 def get_module_description(module):
     desc = module.find("./doc/description")

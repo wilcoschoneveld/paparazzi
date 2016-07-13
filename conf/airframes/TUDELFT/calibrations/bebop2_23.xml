@@ -3,12 +3,14 @@
 <airframe>
   <section name="IMU" prefix="IMU_">
     <!-- Magneto calibration -->
-<define name="MAG_X_NEUTRAL" value="84"/>
-<define name="MAG_Y_NEUTRAL" value="162"/>
-<define name="MAG_Z_NEUTRAL" value="288"/>
-<define name="MAG_X_SENS" value="10.1024207193" integer="16"/>
-<define name="MAG_Y_SENS" value="10.173893411" integer="16"/>
-<define name="MAG_Z_SENS" value="10.4050606351" integer="16"/>
+
+<define name="MAG_X_NEUTRAL" value="-49"/>
+<define name="MAG_Y_NEUTRAL" value="21"/>
+<define name="MAG_Z_NEUTRAL" value="115"/>
+<define name="MAG_X_SENS" value="7.2834119734" integer="16"/>
+<define name="MAG_Y_SENS" value="7.25870080158" integer="16"/>
+<define name="MAG_Z_SENS" value="7.58821687005" integer="16"/>
+
 
 
 

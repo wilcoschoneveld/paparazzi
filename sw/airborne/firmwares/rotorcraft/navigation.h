@@ -1,23 +1,23 @@
- /*
- * Copyright (C) 2008-2011  The Paparazzi Team
- *
- * This file is part of paparazzi.
- *
- * paparazzi is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2, or (at your option)
- * any later version.
- *
- * paparazzi is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with paparazzi; see the file COPYING.  If not, write to
- * the Free Software Foundation, 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
- */
+/*
+* Copyright (C) 2008-2011  The Paparazzi Team
+*
+* This file is part of paparazzi.
+*
+* paparazzi is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2, or (at your option)
+* any later version.
+*
+* paparazzi is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with paparazzi; see the file COPYING.  If not, write to
+* the Free Software Foundation, 59 Temple Place - Suite 330,
+* Boston, MA 02111-1307, USA.
+*/
 
 /**
  * @file firmwares/rotorcraft/navigation.h
@@ -225,13 +225,25 @@ bool nav_check_wp_time(struct EnuCoor_i *wp, uint16_t stay_time);
     nav_flight_altitude = POS_BFP_OF_REAL(flight_altitude - state.ned_origin_f.hmsl); \
   }
 
-
+/// Get current x (east) position in local coordinates
 #define GetPosX() (stateGetPositionEnu_f()->x)
+/// Get current y (north) position in local coordinates
 #define GetPosY() (stateGetPositionEnu_f()->y)
+/// Get current altitude above MSL
 #define GetPosAlt() (stateGetPositionEnu_f()->z+state.ned_origin_f.hmsl)
+/**
+ * Get current altitude reference for local coordinates.
+ * This is the ground_alt from the flight plan at first,
+ * but might be updated later through a call to NavSetGroundReferenceHere() or
+ * NavSetAltitudeReferenceHere(), e.g. in the GeoInit flight plan block.
+ */
 #define GetAltRef() (state.ned_origin_f.hmsl)
 
 
 extern void navigation_update_wp_from_speed(uint8_t wp, struct Int16Vect3 speed_sp, int16_t heading_rate_sp);
+
+#define NavFollow(_ac_id, _distance, _height)   \
+  nav_follow(_ac_id, _distance, _height);
+extern void nav_follow(uint8_t _ac_id, uint32_t distance, uint32_t height);
 
 #endif /* NAVIGATION_H */

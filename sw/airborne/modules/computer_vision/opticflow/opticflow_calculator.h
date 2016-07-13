@@ -27,6 +27,8 @@
  * Using images from a vertical camera and IMU sensor data.
  */
 
+
+
 #ifndef OPTICFLOW_CALCULATOR_H
 #define OPTICFLOW_CALCULATOR_H
 
@@ -37,8 +39,8 @@
 
 struct opticflow_t {
   bool got_first_img;             ///< If we got a image to work with
-  float prev_phi;                   ///< Phi from the previous image frame
-  float prev_theta;                 ///< Theta from the previous image frame
+  bool just_switched_method;
+  struct FloatRates prev_rates;     ///< Gyro Rates from the previous image frame
   struct image_t img_gray;          ///< Current gray image frame
   struct image_t prev_img_gray;     ///< Previous gray image frame
   struct timeval prev_timestamp;    ///< Timestamp of the previous frame, used for FPS calculation
@@ -57,6 +59,7 @@ struct opticflow_t {
   bool fast9_adaptive;            ///< Whether the FAST9 threshold should be adaptive
   uint8_t fast9_threshold;          ///< FAST9 corner detection threshold
   uint16_t fast9_min_distance;      ///< Minimum distance in pixels between corners
+  uint16_t fast9_padding;           ///< Padding used in FAST9 detector
 
 };
 

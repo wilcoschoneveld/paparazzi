@@ -78,22 +78,22 @@ void firmware_parse_msg(void)
     case DL_MOVE_WP: {
       if (DL_MOVE_WP_ac_id(dl_buffer) != AC_ID) { break; }
       uint8_t wp_id = DL_MOVE_WP_wp_id(dl_buffer);
-      float a = MOfMM(DL_MOVE_WP_alt(dl_buffer));
 
       /* Computes from (lat, long) in the referenced UTM zone */
       struct LlaCoor_f lla;
       lla.lat = RadOfDeg((float)(DL_MOVE_WP_lat(dl_buffer) / 1e7));
       lla.lon = RadOfDeg((float)(DL_MOVE_WP_lon(dl_buffer) / 1e7));
+      lla.alt = MOfMM(DL_MOVE_WP_alt(dl_buffer));
       struct UtmCoor_f utm;
       utm.zone = nav_utm_zone0;
       utm_of_lla_f(&utm, &lla);
-      nav_move_waypoint(wp_id, utm.east, utm.north, a);
+      nav_move_waypoint(wp_id, utm.east, utm.north, utm.alt);
 
       /* Waypoint range is limited. Computes the UTM pos back from the relative
          coordinates */
       utm.east = waypoints[wp_id].x + nav_utm_east0;
       utm.north = waypoints[wp_id].y + nav_utm_north0;
-      DOWNLINK_SEND_WP_MOVED(DefaultChannel, DefaultDevice, &wp_id, &utm.east, &utm.north, &a, &nav_utm_zone0);
+      DOWNLINK_SEND_WP_MOVED(DefaultChannel, DefaultDevice, &wp_id, &utm.east, &utm.north, &utm.alt, &nav_utm_zone0);
     }
     break;
 #endif /** NAV */
@@ -101,16 +101,26 @@ void firmware_parse_msg(void)
 #ifdef WIND_INFO
     case DL_WIND_INFO: {
       if (DL_WIND_INFO_ac_id(dl_buffer) != AC_ID) { break; }
-      struct FloatVect2 wind;
-      wind.x = DL_WIND_INFO_north(dl_buffer);
-      wind.y = DL_WIND_INFO_east(dl_buffer);
-      stateSetHorizontalWindspeed_f(&wind);
+      uint8_t flags = DL_WIND_INFO_flags(dl_buffer);
+      struct FloatVect2 wind = { 0.f, 0.f };
+      float upwind = 0.f;
+      if (bit_is_set(flags, 0)) {
+        wind.x = DL_WIND_INFO_north(dl_buffer);
+        wind.y = DL_WIND_INFO_east(dl_buffer);
+        stateSetHorizontalWindspeed_f(&wind);
+      }
+      if (bit_is_set(flags, 1)) {
+        upwind = DL_WIND_INFO_up(dl_buffer);
+        stateSetVerticalWindspeed_f(upwind);
+      }
 #if !USE_AIRSPEED
-      stateSetAirspeed_f(DL_WIND_INFO_airspeed(dl_buffer));
+      if (bit_is_set(flags, 2)) {
+        stateSetAirspeed_f(DL_WIND_INFO_airspeed(dl_buffer));
+      }
 #endif
 #ifdef WIND_INFO_RET
       float airspeed = stateGetAirspeed_f();
-      DOWNLINK_SEND_WIND_INFO_RET(DefaultChannel, DefaultDevice, &wind.y, &wind.x, &airspeed);
+      DOWNLINK_SEND_WIND_INFO_RET(DefaultChannel, DefaultDevice, &flags, &wind.y, &wind.x, &upwind, &airspeed);
 #endif
     }
     break;
