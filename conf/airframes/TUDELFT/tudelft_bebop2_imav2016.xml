@@ -69,6 +69,7 @@
       <define name="FILE_LOGGER_PATH" value="/data/ftp/internal_000"/>
     </module-->
     <module name="video_thread"/>
+    <module name="video_exif"/>
     <module name="cv_ae_awb"/>
 
     <module name="cv_blob_locator">
@@ -104,7 +105,6 @@
     <module name="digital_cam_video">
       <define name="DC_AUTOSHOOT_DISTANCE_INTERVAL" value="5"/>
     </module>
-    <module name="video_exif"/>
 
     <module name="switch" type="uart">
       <configure name="SWITCH_UART_PORT" value="uart2" />
