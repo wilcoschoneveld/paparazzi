@@ -33,6 +33,7 @@
  */
 
 #include "dc.h"
+#include "firmwares/rotorcraft/autopilot.h"
 
 // for waypoints, include correct header until we have unified API
 #ifdef AP
@@ -240,6 +241,12 @@ static float dim_mod(float a, float b, float m)
 void dc_periodic(void)
 {
   static float last_shot_time = 0.;
+
+  if (autopilot_mode == AP_MODE_GUIDED) {
+    dc_autoshoot = DC_AUTOSHOOT_PERIODIC;
+  } else {
+    dc_autoshoot = DC_AUTOSHOOT_STOP;
+  }
 
   switch (dc_autoshoot) {
 
